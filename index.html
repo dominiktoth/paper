@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Papír botok</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f6f5; --surface:#ffffff; --surface-2:#edf1ef; --ink:#17221e; --muted:#5d6a65; --line:#dbe2df;
+  --win:#13864a; --win-bg:#e3f4ea; --loss:#c23a33; --loss-bg:#fbe7e5; --accent:#94701a; --accent-bg:#f6eedb;
+  --shadow:0 1px 2px rgba(20,30,25,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1113; --surface:#151a1d; --surface-2:#1b2125; --ink:#e6ecea; --muted:#8b9893; --line:#263034;
+    --win:#35c27a; --win-bg:#14301f; --loss:#ee6a62; --loss-bg:#3a1a19; --accent:#d8ad46; --accent-bg:#2e2715; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1113; --surface:#151a1d; --surface-2:#1b2125; --ink:#e6ecea; --muted:#8b9893; --line:#263034;
+  --win:#35c27a; --win-bg:#14301f; --loss:#ee6a62; --loss-bg:#3a1a19; --accent:#d8ad46; --accent-bg:#2e2715; --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+.num,td.n,.kpi b,.cal .pl,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:22px;font-weight:700;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px}
+.hdr-r{display:flex;align-items:center;gap:10px}
+button{font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tab{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:190px;padding:10px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line);text-align:left}
+.tab[aria-selected="true"]{border-color:var(--accent);background:var(--accent-bg)}
+.tab .t{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
+.tab .p{font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.dot.on{background:var(--win);box-shadow:0 0 0 3px var(--win-bg)}
+.desc{color:var(--muted);font-size:13px;margin-top:-6px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;box-shadow:var(--shadow)}
+.kpi span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.kpi b{font-size:18px;font-weight:600}
+.pos{color:var(--win)} .neg{color:var(--loss)}
+.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);min-width:0}
+.card h2{font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mnav{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;color:var(--ink);font-size:14px}
+.mnav button{padding:2px 9px}
+.cal{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,.9fr);gap:6px}
+.cal .h{font-size:11px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.06em}
+.cal .d{min-height:70px;border-radius:8px;background:var(--surface-2);padding:6px 7px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid transparent;cursor:default}
+.cal .d.has{cursor:pointer}
+.cal .d.w{background:var(--win-bg)} .cal .d.l{background:var(--loss-bg)}
+.cal .d.sel{border-color:var(--accent)}
+.cal .d.out{opacity:.35}
+.cal .d.today .dn{color:var(--accent);font-weight:700}
+.cal .dn{font-size:12px;color:var(--muted)}
+.cal .pl{font-size:14px;font-weight:600;text-align:right}
+.cal .nt{font-size:11px;color:var(--muted);text-align:right}
+.cal .wk{background:transparent;border:1px dashed var(--line)}
+.calfoot{display:flex;justify-content:space-between;margin-top:10px;font-size:13px;color:var(--muted)}
+svg text{fill:var(--muted);font:11px "IBM Plex Mono",monospace}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{position:sticky;top:0;background:var(--surface);text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+td{padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.n{text-align:right}
+tr:hover td{background:var(--surface-2)}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.L{background:var(--win-bg);color:var(--win)} .pill.S{background:var(--loss-bg);color:var(--loss)}
+.tag{display:inline-block;padding:1px 7px;border-radius:6px;background:var(--surface-2);font-size:12px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+select,input{font:inherit;font-size:13px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-bg);color:var(--ink);border-radius:999px;padding:3px 10px;font-size:13px}
+.chip button{border:0;background:transparent;padding:0 2px;color:var(--muted)}
+.empty{color:var(--muted);font-size:14px;padding:18px 4px}
+.oplist{display:flex;flex-direction:column;gap:8px}
+.op{display:flex;justify-content:space-between;gap:10px;background:var(--surface-2);border-radius:8px;padding:8px 10px;font-size:13px;flex-wrap:wrap}
+.status{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;margin-top:12px}
+details summary{cursor:pointer;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.sig{display:grid;grid-template-columns:150px 150px 70px 90px 1fr;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+@media (max-width:700px){.sig{grid-template-columns:1fr 1fr;}.tab{min-width:160px}}
+.err{background:var(--loss-bg);color:var(--loss);border-radius:8px;padding:10px 12px;font-size:14px}
+@media (prefers-reduced-motion:no-preference){.card,.kpi{transition:border-color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Papír botok</h1>
+      <div class="sub" id="upd">betöltés…</div>
+    </div>
+    <div class="hdr-r">
+      <button id="themeBtn" type="button" aria-label="Téma váltása">Téma</button>
+      <button id="reloadBtn" type="button">Frissítés</button>
+    </div>
+  </header>
+  <div id="err"></div>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+  <div class="desc" id="desc"></div>
+  <section class="kpis" id="kpis"></section>
+  <div class="grid">
+    <section class="card">
+      <h2><span>Naptár (Topstep-nap, 18:00 ET-tól)</span><span class="mnav"><button type="button" id="mPrev" aria-label="Előző hónap">‹</button><span id="mLabel"></span><button type="button" id="mNext" aria-label="Következő hónap">›</button></span></h2>
+      <div class="cal" id="cal"></div>
+      <div class="calfoot"><span id="mTotal"></span><span id="mStats"></span></div>
+    </section>
+    <section class="card">
+      <h2><span>Egyenleg-görbe</span><span class="sub" id="eqLabel"></span></h2>
+      <div id="eq"></div>
+      <h2 style="margin-top:16px"><span>Nyitott pozíciók</span></h2>
+      <div class="oplist" id="open"></div>
+      <div class="status" id="status"></div>
+    </section>
+  </div>
+  <section class="card">
+    <h2><span>Trade-ek</span><span class="sub" id="tCount"></span></h2>
+    <div class="filters" id="filters"></div>
+    <div class="tablewrap"><table id="tbl"></table></div>
+  </section>
+  <section class="card">
+    <details id="sigBox"><summary>Jelek és döntések (utolsó 300 / bot)</summary><div id="sigs" style="margin-top:10px"></div></details>
+  </section>
+</div>
+<script>
+const DATA_URL = 'https://rfmmwzrgxxcaknufcfui.supabase.co/storage/v1/object/public/paper/data.json';
+const S = { data:null, bot:'all', month:null, day:null, sleeve:'', sort:{k:'t_exit',d:-1} };
+const $ = id => document.getElementById(id);
+const fmtUsd = v => v==null||isNaN(v) ? '–' : (v<0?'−$':(v>0?'+$':'$')) + Math.abs(v).toLocaleString('hu-HU',{maximumFractionDigits:0});
+const fmtNum = (v,d=2) => v==null||isNaN(v) ? '–' : Number(v).toLocaleString('hu-HU',{minimumFractionDigits:d,maximumFractionDigits:d});
+const cls = v => v>0?'pos':(v<0?'neg':'');
+const tShort = iso => iso ? new Date(iso).toLocaleString('hu-HU',{timeZone:'America/New_York',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '–';
+const dLabel = d => new Date(d+'T12:00:00').toLocaleDateString('hu-HU',{month:'short',day:'numeric',weekday:'short'});
+const todayNY = () => { const p = new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()); const g=k=>p.find(x=>x.type===k).value; const d=new Date(`${g('year')}-${g('month')}-${g('day')}T12:00:00`); if(+g('hour')>=18) d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); };
+
+function bots(){ return S.data ? S.data.botok : []; }
+function trades(){
+  const out=[]; for(const b of bots()) if(S.bot==='all'||S.bot===b.id) for(const t of b.trades) out.push({...t, bot:b.nev, botId:b.id});
+  return out.filter(t=>t.usd!=null);
+}
+function stats(ts){
+  const n=ts.length, w=ts.filter(t=>t.usd>0), l=ts.filter(t=>t.usd<0);
+  const gw=w.reduce((a,t)=>a+t.usd,0), gl=-l.reduce((a,t)=>a+t.usd,0);
+  const days={}; for(const t of ts){ days[t.nap]=(days[t.nap]||0)+t.usd; }
+  const dk=Object.keys(days).sort(); let eq=0,pk=0,dd=0; for(const d of dk){eq+=days[d];pk=Math.max(pk,eq);dd=Math.min(dd,eq-pk);}
+  const dv=Object.values(days);
+  return {n,total:gw-gl,wr:n?w.length/n:null,pf:gl>0?gw/gl:(gw>0?Infinity:null),avg:n?(gw-gl)/n:null,dd,best:dv.length?Math.max(...dv):null,worst:dv.length?Math.min(...dv):null,days,dk};
+}
+function renderTabs(){
+  const all=[{id:'all',nev:'Összes',allapot:null,trades:bots().flatMap(b=>b.trades)},...bots()];
+  $('tabs').innerHTML=all.map(b=>{const tot=b.trades.reduce((a,t)=>a+(t.usd||0),0); const on=b.allapot&&b.allapot.fut;
+    return `<button class="tab" role="tab" aria-selected="${S.bot===b.id}" data-id="${b.id}"><span class="t">${b.allapot?`<span class="dot ${on?'on':''}" title="${on?'fut':'nem fut'}"></span>`:''}${b.nev}</span><span class="p num ${cls(tot)}">${fmtUsd(tot)} · ${b.trades.length} trade</span></button>`}).join('');
+  $('tabs').querySelectorAll('.tab').forEach(el=>el.onclick=()=>{S.bot=el.dataset.id;S.day=null;S.sleeve='';render();});
+  const b=bots().find(x=>x.id===S.bot); $('desc').textContent=b?b.leiras:'Mindhárom papír bot együtt. Minden $-érték költséggel, Topstep-nap szerint (18:00 ET-tól).';
+}
+function renderKpis(st){
+  const k=[['Összes P&L',fmtUsd(st.total),cls(st.total)],['Trade-ek',st.n,''],['Nyerési arány',st.wr==null?'–':Math.round(st.wr*100)+'%',''],['Profit factor',st.pf==null?'–':(st.pf===Infinity?'∞':fmtNum(st.pf)),''],
+    ['Átlag trade',fmtUsd(st.avg),cls(st.avg)],['Max visszaesés',fmtUsd(st.dd),st.dd<0?'neg':''],['Legjobb nap',fmtUsd(st.best),cls(st.best)],['Legrosszabb nap',fmtUsd(st.worst),cls(st.worst)]];
+  $('kpis').innerHTML=k.map(([a,b,c])=>`<div class="kpi"><span>${a}</span><b class="${c}">${b}</b></div>`).join('');
+}
+function renderCal(st){
+  if(!S.month){ const last=st.dk.length?st.dk[st.dk.length-1]:todayNY(); S.month=last.slice(0,7); }
+  const [y,m]=S.month.split('-').map(Number); const first=new Date(y,m-1,1), last=new Date(y,m,0);
+  $('mLabel').textContent=first.toLocaleDateString('hu-HU',{year:'numeric',month:'long'});
+  const cnt={}; for(const t of trades()) cnt[t.nap]=(cnt[t.nap]||0)+1;
+  let start=new Date(first); start.setDate(start.getDate()-((start.getDay()+6)%7));
+  let html=['H','K','Sze','Cs','P','Hét'].map(h=>`<div class="h">${h}</div>`).join(''); const today=todayNY(); let mTot=0,mW=0,mL=0;
+  for(let d=new Date(start); d<=last || d.getDay()!==1; ){
+    let wk=0, wkN=0;
+    for(let i=0;i<7;i++){
+      const iso=new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); const inM=d.getMonth()===m-1;
+      if(i<5){ const v=st.days[iso]; const has=v!=null; if(has){wk+=v;wkN+=cnt[iso]||0; if(inM){mTot+=v; if(v>0)mW++; else if(v<0)mL++;}}
+        html+=`<div class="d ${has?(v>0?'w':(v<0?'l':'')):''} ${has?'has':''} ${inM?'':'out'} ${S.day===iso?'sel':''} ${iso===today?'today':''}" ${has?`data-d="${iso}" role="button" tabindex="0"`:''}><span class="dn">${d.getDate()}</span>${has?`<span><div class="pl ${cls(v)}">${fmtUsd(v)}</div><div class="nt">${cnt[iso]||0} trade</div></span>`:''}</div>`; }
+      else { const v=st.days[iso]; if(v!=null){wk+=v;wkN+=cnt[iso]||0;} }
+      d.setDate(d.getDate()+1);
+    }
+    html+=`<div class="d wk"><span class="dn">hét</span>${wkN?`<span><div class="pl ${cls(wk)}">${fmtUsd(wk)}</div><div class="nt">${wkN} trade</div></span>`:''}</div>`;
+    if(d>last) break;
+  }
+  $('cal').innerHTML=html;
+  $('cal').querySelectorAll('.d.has').forEach(el=>{const f=()=>{S.day=S.day===el.dataset.d?null:el.dataset.d;render();}; el.onclick=f; el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f();}};});
+  $('mTotal').innerHTML=`Havi összesen: <b class="num ${cls(mTot)}">${fmtUsd(mTot)}</b>`; $('mStats').textContent=`${mW} nyerő / ${mL} vesztes nap`;
+}
+function renderEq(st){
+  const w=520,h=200,p={l:56,r:12,t:12,b:24}; if(!st.dk.length){$('eq').innerHTML='<div class="empty">Még nincs lezárt trade.</div>';$('eqLabel').textContent='';return;}
+  let e=0; const pts=[{d:st.dk[0],v:0}]; for(const d of st.dk){e+=st.days[d];pts.push({d,v:e});}
+  const vs=pts.map(p=>p.v), lo=Math.min(0,...vs), hi=Math.max(0,...vs), span=(hi-lo)||1;
+  const X=i=>p.l+(w-p.l-p.r)*i/(pts.length-1||1), Y=v=>p.t+(h-p.t-p.b)*(1-(v-lo)/span);
+  const line=pts.map((q,i)=>`${i?'L':'M'}${X(i).toFixed(1)},${Y(q.v).toFixed(1)}`).join(''); const end=pts[pts.length-1].v; const col=end>=0?'var(--win)':'var(--loss)';
+  $('eq').innerHTML=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="Kumulált P&L">
+    <line x1="${p.l}" x2="${w-p.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--line)" stroke-dasharray="3 3"/>
+    <path d="${line}L${X(pts.length-1)},${Y(0)}L${X(0)},${Y(0)}Z" fill="${col}" fill-opacity=".12"/>
+    <path d="${line}" fill="none" stroke="${col}" stroke-width="2"/>
+    <circle cx="${X(pts.length-1)}" cy="${Y(end)}" r="3.5" fill="${col}"/>
+    <text x="${p.l-6}" y="${Y(hi)+4}" text-anchor="end">${fmtUsd(hi)}</text><text x="${p.l-6}" y="${Y(lo)+4}" text-anchor="end">${fmtUsd(lo)}</text>
+    <text x="${p.l}" y="${h-6}">${dLabel(pts[1].d)}</text><text x="${w-p.r}" y="${h-6}" text-anchor="end">${dLabel(pts[pts.length-1].d)}</text></svg>`;
+  $('eqLabel').innerHTML=`<span class="num ${cls(end)}">${fmtUsd(end)}</span>`;
+}
+function renderOpen(){
+  const list=[]; for(const b of bots()) if(S.bot==='all'||S.bot===b.id) for(const o of b.nyitott||[]) list.push({...o,bot:b.nev});
+  $('open').innerHTML=list.length?list.map(o=>`<div class="op"><span>${o.side!=null?`<span class="pill ${o.side>0?'L':'S'}">${o.side>0?'Long':'Short'}</span> `:''}<span class="tag">${o.bot}</span> ${o.id||''}</span><span class="num">${o.qty?o.qty+' db · ':''}${o.entry!=null?'@ '+fmtNum(o.entry):''}${o.stop!=null?' · stop '+fmtNum(o.stop):''}${o.cel!=null?' · cél '+fmtNum(o.cel):''}</span><span class="sub">${tShort(o.t_entry)}</span></div>`).join(''):'<div class="empty">Nincs nyitott pozíció.</div>';
+  const st=bots().filter(b=>S.bot==='all'||S.bot===b.id).map(b=>{const a=b.allapot||{}; return `<span><span class="dot ${a.fut?'on':''}" style="display:inline-block;margin-right:6px"></span><b>${b.nev}</b>: ${a.fut?'fut':'nem fut'}${a.heartbeat?` · utolsó jelzés a bottól ${tShort(a.heartbeat)} (${a.kor_perc<120?Math.round(a.kor_perc)+' perce':Math.round(a.kor_perc/60)+' órája'})`:' · még nem indult'}${a.ea_utolso_jel!==undefined?` · EA utolsó jele: ${a.ea_utolso_jel?tShort(a.ea_utolso_jel):'még nincs'}`:''}</span>`});
+  $('status').innerHTML=st.join('');
+}
+function renderTable(){
+  let ts=trades(); const sleeves=[...new Set(ts.map(t=>t.sleeve))].sort();
+  $('filters').innerHTML=`<select id="fSl" aria-label="Stratégia"><option value="">Minden stratégia</option>${sleeves.map(s=>`<option ${S.sleeve===s?'selected':''}>${s}</option>`).join('')}</select>${S.day?`<span class="chip">${dLabel(S.day)} <button type="button" id="clrDay" aria-label="Nap szűrő törlése">✕</button></span>`:''}`;
+  $('fSl').onchange=e=>{S.sleeve=e.target.value;renderTable();}; if(S.day) $('clrDay').onclick=()=>{S.day=null;render();};
+  if(S.sleeve) ts=ts.filter(t=>t.sleeve===S.sleeve); if(S.day) ts=ts.filter(t=>t.nap===S.day);
+  const k=S.sort.k, d=S.sort.d; ts.sort((a,b)=>{const x=a[k],y=b[k]; return (x>y?1:x<y?-1:0)*d;});
+  const cols=[['nap','Nap'],['bot','Bot'],['sleeve','Stratégia'],['side','Irány'],['qty','Db'],['t_entry','Belépés'],['entry','Ár'],['t_exit','Kilépés'],['exit','Ár'],['pts','Pont'],['usd','P&L'],['R','R'],['ok','Kilépés oka']];
+  $('tbl').innerHTML=`<thead><tr>${cols.map(([c,l])=>`<th data-k="${c}">${l}${S.sort.k===c?(S.sort.d>0?' ▲':' ▼'):''}</th>`).join('')}</tr></thead><tbody>${ts.length?ts.map(t=>`<tr>
+    <td>${t.nap?dLabel(t.nap):'–'}</td><td><span class="tag">${t.bot}</span></td><td>${t.sleeve||''}</td><td><span class="pill ${t.side>0?'L':'S'}">${t.side>0?'Long':'Short'}</span></td>
+    <td class="n">${t.qty??''}</td><td class="mono">${tShort(t.t_entry)}</td><td class="n">${fmtNum(t.entry)}</td><td class="mono">${tShort(t.t_exit)}</td><td class="n">${fmtNum(t.exit)}</td>
+    <td class="n ${cls(t.pts)}">${fmtNum(t.pts)}</td><td class="n ${cls(t.usd)}"><b>${fmtUsd(t.usd)}</b></td><td class="n ${cls(t.R)}">${t.R==null?'–':fmtNum(t.R)}</td><td>${t.ok||''}</td></tr>`).join(''):`<tr><td colspan="${cols.length}" class="empty">Nincs trade ezzel a szűréssel.</td></tr>`}</tbody>`;
+  $('tbl').querySelectorAll('th').forEach(th=>th.onclick=()=>{const c=th.dataset.k; S.sort={k:c,d:S.sort.k===c?-S.sort.d:-1}; renderTable();});
+  const tot=ts.reduce((a,t)=>a+t.usd,0); $('tCount').innerHTML=`${ts.length} trade · <span class="num ${cls(tot)}">${fmtUsd(tot)}</span>`;
+}
+function renderSigs(){
+  const list=[]; for(const b of bots()) if(S.bot==='all'||S.bot===b.id) for(const s of b.jelek||[]) list.push({...s,bot:b.nev});
+  list.sort((a,b)=>(a.t<b.t?1:-1));
+  $('sigs').innerHTML=list.length?list.slice(0,400).map(s=>`<div class="sig"><span class="mono">${tShort(s.t)}</span><span class="tag">${s.bot}</span><span>${s.side?`<span class="pill ${s.side>0?'L':'S'}">${s.side>0?'Long':'Short'}</span>`:''}</span><span>${s.mit||''}</span><span class="sub">${s.miert||''}${s.sleeve?' · '+s.sleeve:''}</span></div>`).join(''):'<div class="empty">Nincs jel.</div>';
+}
+function render(){ if(!S.data) return; const st=stats(trades()); renderTabs(); renderKpis(st); renderCal(st); renderEq(st); renderOpen(); renderTable(); if($('sigBox').open) renderSigs(); }
+async function load(){
+  try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); S.data=await r.json(); $('err').innerHTML='';
+    $('upd').textContent='Frissítve (a Pi-n): '+new Date(S.data.keszult).toLocaleString('hu-HU',{timeZone:'America/New_York',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+' NY · az oldal percenként újratölt'; render(); }
+  catch(e){ $('err').innerHTML=`<div class="err">Az adat nem tölthető be (${e.message}). A Pi 5 percenként tölti fel; ha ez tartósan fennáll, a Pi vagy a crontab nem fut.</div>`; }
+}
+$('mPrev').onclick=()=>{const [y,m]=S.month.split('-').map(Number); const d=new Date(y,m-2,1); S.month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render();};
+$('mNext').onclick=()=>{const [y,m]=S.month.split('-').map(Number); const d=new Date(y,m,1); S.month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render();};
+$('reloadBtn').onclick=load; $('sigBox').ontoggle=()=>{ if($('sigBox').open) renderSigs(); };
+(function(){ let t=null; try{t=localStorage.getItem('paper-theme');}catch(e){} if(t) document.documentElement.dataset.theme=t;
+  $('themeBtn').onclick=()=>{ const cur=document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'); const nx=cur==='dark'?'light':'dark'; document.documentElement.dataset.theme=nx; try{localStorage.setItem('paper-theme',nx);}catch(e){} }; })();
+load(); setInterval(load, 60000);
+</script>
+</body>
+</html>
