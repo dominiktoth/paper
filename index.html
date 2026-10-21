@@ -159,7 +159,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;text-transform:
 </div>
 <script>
 const DATA_URL = 'https://rfmmwzrgxxcaknufcfui.supabase.co/storage/v1/object/public/paper/data.json';
-const S = { data:null, bot:'all', month:null, day:null, sleeve:'', sort:{k:'t_exit',d:-1}, phaseOnly:true, view:'all' };
+const S = { data:null, bot:'all', month:null, day:null, sleeve:'', sort:{k:'t_exit',d:-1}, phaseOnly:false, view:'all' };   // 2026-10-21: alapból MINDEN nap látszik a naptárban (a user nem látta a napi profitokat a fázis-szűrő miatt)
 const $ = id => document.getElementById(id);
 const fmtUsd = v => v==null||isNaN(v) ? '–' : (v<0?'−$':(v>0?'+$':'$')) + Math.abs(v).toLocaleString('hu-HU',{maximumFractionDigits:0});
 const fmtNum = (v,d=2) => v==null||isNaN(v) ? '–' : Number(v).toLocaleString('hu-HU',{minimumFractionDigits:d,maximumFractionDigits:d});
