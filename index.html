@@ -90,6 +90,29 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;text-transform:
 @media (max-width:700px){.sig{grid-template-columns:1fr 1fr;}.tab{min-width:160px}}
 .err{background:var(--loss-bg);color:var(--loss);border-radius:8px;padding:10px 12px;font-size:14px}
 @media (prefers-reduced-motion:no-preference){.card,.kpi{transition:border-color .15s}}
+/* számla-fázis (2026-10-20) */
+.badge{display:inline-block;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:600;letter-spacing:.05em;margin-left:6px;vertical-align:1px}
+.badge.eval{background:var(--accent-bg);color:var(--accent)} .badge.funded{background:var(--win-bg);color:var(--win)} .badge.stop{background:var(--loss-bg);color:var(--loss)}
+.acct{margin-top:12px}
+.acct .phase{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.acct .phase .big{font-size:22px;font-weight:700;letter-spacing:.03em}
+.acct .phase .big.eval{color:var(--accent)} .acct .phase .big.funded{color:var(--win)}
+.acct .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px}
+.acct .row div{background:var(--surface-2);border-radius:8px;padding:6px 10px} .acct .row span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.acct ul{list-style:none;margin:0;padding:0;font-size:13px} .acct li{padding:5px 0;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap}
+.acct li .d{color:var(--muted);min-width:90px} .acct li.ok b{color:var(--win)} .acct li.bad b{color:var(--loss)}
+.acct label{font-size:13px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.viewsw{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.vbtn{font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.vbtn[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);border-color:var(--ink)}
+.segs{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.arr{color:var(--muted)}
+.seg{display:flex;flex-direction:column;gap:2px;font-size:12px;padding:6px 9px;border-radius:8px;background:var(--surface-2);border-left:4px solid var(--muted);min-width:140px}
+.seg.e{border-left-color:#3b7dd8}.seg.f{border-left-color:var(--win)}.seg.bad .res{color:var(--loss);font-weight:600}.seg.ok .res{color:var(--win);font-weight:600}.seg .pay{color:var(--accent)}
+.cal .d.pe{box-shadow:inset 0 3px 0 #3b7dd8}.cal .d.pf{box-shadow:inset 0 3px 0 var(--win)}
+.tag.te{background:#3b7dd8;color:#fff}.tag.tf{background:var(--win);color:#fff}
+.evb{font-size:10px;font-weight:600;border-radius:4px;padding:1px 4px;margin-top:2px;display:inline-block}
+.evb.pass{background:var(--win);color:#fff}.evb.bust{background:var(--loss);color:#fff}.evb.pay{background:var(--accent);color:#fff}.evb.sw{background:var(--muted);color:#fff}
+.bfnote{font-size:13px;padding:8px 10px;margin-bottom:10px;border-radius:8px;background:var(--surface-2);border-left:3px solid var(--muted)}
 </style>
 </head>
 <body>
@@ -106,7 +129,10 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;text-transform:
   </header>
   <div id="err"></div>
   <nav class="tabs" id="tabs" role="tablist"></nav>
+  <div class="viewsw" id="viewsw" hidden></div>
   <div class="desc" id="desc"></div>
+  <section class="card acct" id="acct" hidden></section>
+  <section class="card" id="life" hidden></section>
   <section class="kpis" id="kpis"></section>
   <div class="grid">
     <section class="card">
@@ -133,7 +159,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;text-transform:
 </div>
 <script>
 const DATA_URL = 'https://rfmmwzrgxxcaknufcfui.supabase.co/storage/v1/object/public/paper/data.json';
-const S = { data:null, bot:'all', month:null, day:null, sleeve:'', sort:{k:'t_exit',d:-1} };
+const S = { data:null, bot:'all', month:null, day:null, sleeve:'', sort:{k:'t_exit',d:-1}, phaseOnly:true, view:'live' };
 const $ = id => document.getElementById(id);
 const fmtUsd = v => v==null||isNaN(v) ? '–' : (v<0?'−$':(v>0?'+$':'$')) + Math.abs(v).toLocaleString('hu-HU',{maximumFractionDigits:0});
 const fmtNum = (v,d=2) => v==null||isNaN(v) ? '–' : Number(v).toLocaleString('hu-HU',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -143,8 +169,12 @@ const dLabel = d => new Date(d+'T12:00:00').toLocaleDateString('hu-HU',{month:'s
 const todayNY = () => { const p = new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()); const g=k=>p.find(x=>x.type===k).value; const d=new Date(`${g('year')}-${g('month')}-${g('day')}T12:00:00`); if(+g('hour')>=18) d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); };
 
 function bots(){ return S.data ? S.data.botok : []; }
+function bf(){ return S.view==='bf'; }   // 2026-10-20: visszamenőleges szimuláció nézet (b.bf), az élő számlától teljesen külön
+const live = ts => ts.filter(t=>!String(t.id||'').endsWith('_bf'));   // a fő lista a visszamenőlegeseket is tartalmazza (régi oldal miatt) → az élő nézet kiszűri
+function src(b){ return bf()&&b.bf ? b.bf : {...b, trades: live(b.trades)}; }
 function trades(){
-  const out=[]; for(const b of bots()) if(S.bot==='all'||S.bot===b.id) for(const t of b.trades) out.push({...t, bot:b.nev, botId:b.id});
+  const out=[]; for(const b of bots()) if(S.bot==='all'||S.bot===b.id){ const x=src(b); const k=(!bf()&&S.bot===b.id&&S.phaseOnly&&b.szamla&&b.szamla.fazis_kezdete)?b.szamla.fazis_kezdete:null;
+    for(const t of x.trades) if(!k||t.nap>k) out.push({...t, bot:b.nev, botId:b.id}); }
   return out.filter(t=>t.usd!=null);
 }
 function stats(ts){
@@ -156,11 +186,40 @@ function stats(ts){
   return {n,total:gw-gl,wr:n?w.length/n:null,pf:gl>0?gw/gl:(gw>0?Infinity:null),avg:n?(gw-gl)/n:null,dd,best:dv.length?Math.max(...dv):null,worst:dv.length?Math.min(...dv):null,days,dk};
 }
 function renderTabs(){
-  const all=[{id:'all',nev:'Összes',allapot:null,trades:bots().flatMap(b=>b.trades)},...bots()];
-  $('tabs').innerHTML=all.map(b=>{const tot=b.trades.reduce((a,t)=>a+(t.usd||0),0); const on=b.allapot&&b.allapot.fut;
-    return `<button class="tab" role="tab" aria-selected="${S.bot===b.id}" data-id="${b.id}"><span class="t">${b.allapot?`<span class="dot ${on?'on':''}" title="${on?'fut':'nem fut'}"></span>`:''}${b.nev}</span><span class="p num ${cls(tot)}">${fmtUsd(tot)} · ${b.trades.length} trade</span></button>`}).join('');
+  const all=bots();   // 2026-10-20 (user): nincs összesítő fül, csak a két külön beállítás (EVAL, FUNDED)
+  $('tabs').innerHTML=all.map(b=>{const tot=live(b.trades).reduce((a,t)=>a+(t.usd||0),0); const on=b.allapot&&b.allapot.fut;
+    return `<button class="tab" role="tab" aria-selected="${S.bot===b.id}" data-id="${b.id}"><span class="t">${b.allapot?`<span class="dot ${on?'on':''}" title="${on?'fut':'nem fut'}"></span>`:''}${b.nev}${b.szamla?phaseBadge(b.szamla):''}</span><span class="p num ${cls(tot)}">${fmtUsd(tot)} · ${live(b.trades).length} trade</span></button>`}).join('');
   $('tabs').querySelectorAll('.tab').forEach(el=>el.onclick=()=>{S.bot=el.dataset.id;S.day=null;S.sleeve='';render();});
-  const b=bots().find(x=>x.id===S.bot); $('desc').textContent=b?b.leiras:'Mindhárom papír bot együtt. Minden $-érték költséggel, Topstep-nap szerint (18:00 ET-tól).';
+  const b=bots().find(x=>x.id===S.bot); $('desc').textContent=b?b.leiras:'Az összes papír bot együtt. Minden $-érték költséggel, Topstep-nap szerint (18:00 ET-tól).';
+  const vs=$('viewsw'); if(!b||!b.bf){ vs.hidden=true; if(bf()) S.view='live'; return; }
+  vs.hidden=false; const tb=b.bf.trades.reduce((a,t)=>a+(t.usd||0),0);
+  vs.innerHTML=`<button type="button" class="vbtn" aria-pressed="${!bf()}" data-v="live">Élő papír (${live(b.trades).length} trade)</button><button type="button" class="vbtn" aria-pressed="${bf()}" data-v="bf">Visszamenőleges szimuláció · ${b.bf.idoszak||''} (${b.bf.trades.length} trade, <span class="num ${cls(tb)}">${fmtUsd(tb)}</span>)</button>`;
+  vs.querySelectorAll('.vbtn').forEach(el=>el.onclick=()=>{S.view=el.dataset.v;S.day=null;S.month=null;S.sleeve='';render();});
+}
+function phaseBadge(a){ return a.leallitva?'<span class="badge stop">LEÁLLÍTVA</span>':`<span class="badge ${a.fazis==='FUNDED'?'funded':'eval'}">${a.fazis==='FUNDED'?'FUNDED':'EVAL #'+(a.proba||1)}</span>`; }
+function renderAcct(){
+  const b=bots().find(x=>x.id===S.bot), el=$('acct');
+  const x=b?src(b):null;
+  if(!x||!x.szamla){ el.hidden=true; return; }
+  const a=x.szamla, f=a.fazis==='FUNDED'; el.hidden=false;
+  const cut=[a.lezart_nap,a.fazis_kezdete].filter(Boolean).sort().pop()||null;   // a még le nem zárt (mai) napok realizáltja: a politika csak napzárkor könyvel
+  const open_=bf()?0:live(b.trades).filter(t=>t.usd!=null&&(!cut||t.nap>cut)).reduce((x,t)=>x+t.usd,0), bal=a.egyenleg+open_, room=bal-a.padlo;
+  const ev=(a.esemenyek||[]).filter(e=>bf()||!/^\[visszamenőleges\]/.test(e.esemeny)).map(e=>{const ok=/PASS|KIFIZET/.test(e.esemeny), bad=/BUKÁS/.test(e.esemeny);
+    return `<li class="${ok?'ok':(bad?'bad':'')}"><span class="d">${dLabel(e.nap)}</span><b>${e.esemeny}</b><span class="num">${fmtUsd(e.pnl)} · egyenleg ${fmtUsd(e.egyenleg)}</span></li>`}).join('');
+  el.innerHTML=`${bf()?`<div class="bfnote"><b>Visszamenőleges szimuláció</b> · ${x.idoszak||''} · ${x.leiras||''}</div>`:''}<div class="phase"><span class="big ${f?'funded':'eval'}">${f?'FUNDED':'EVAL'}</span><span class="sub">${f?'#'+(a.proba||1)+' funded · MLL $2 000, rögzül $0-n':'#'+(a.proba||1)+' eval · cél +$3 000, legjobb nap ≤ 55 % · PASS-nál nullázódik'}${a.fazis_kezdete?' · fázis kezdete: '+dLabel(a.fazis_kezdete)+' után':''}</span>${a.leallitva?`<span class="badge stop">${a.leallitva}</span>`:''}</div>
+  <div class="row"><div><span>Egyenleg (fázis, a mai realizálttal)</span><b class="num ${cls(bal)}">${fmtUsd(bal)}</b></div><div><span>Padló (MLL)</span><b class="num">${fmtUsd(a.padlo)}</b></div>
+  <div><span>Tartalék</span><b class="num">${fmtUsd(room)}</b></div><div><span>Szorzó (ma)</span><b class="num">${a.szorzo_ma?'×'+fmtNum(a.szorzo_ma,a.szorzo_ma%1?2:0):(a.szorzo?'×'+fmtNum(a.szorzo,a.szorzo%1?2:0):'–')}</b></div>
+  ${f?`<div><span>Kifizetve</span><b class="num ${a.kifizetve>0?'pos':''}">${fmtUsd(a.kifizetve)} (${a.kifizetes_db})</b></div>`:`<div><span>Átment (PASS)</span><b class="num ${a.passok>0?'pos':''}">${a.passok||0}</b></div>`}<div><span>Bukások</span><b class="num">${a.bukasok}</b></div></div>
+  ${bf()?'':`<label><input type="checkbox" id="phaseOnly" ${S.phaseOnly?'checked':''}> csak a mostani fázis trade-jei (naptár, görbe, tábla)</label>`}
+  ${ev?`<ul style="margin-top:8px">${ev}</ul>`:'<div class="sub" style="margin-top:8px">Még nincs PASS, kifizetés vagy bukás.</div>'}`;
+  if(!bf()) $('phaseOnly').onchange=e=>{S.phaseOnly=e.target.checked; render();};
+}
+function renderLife(){
+  const b=bots().find(x=>x.id===S.bot), el=$('life'); const L=b?src(b).eletciklus:null;
+  if(!L||!L.idovonal||!L.idovonal.length){ el.hidden=true; return; } el.hidden=false;
+  const chip=g=>{const c=g.fazis==='FUNDED'?'f':'e', r=g.eredmeny==='PASS'?'PASS → FUNDED':g.eredmeny==='BUKÁS'?'BUKÁS → új EVAL':g.eredmeny==='VÁLTÁS'?'stratégia-váltás':'folyamatban';
+    return `<div class="seg ${c} ${g.eredmeny==='BUKÁS'?'bad':(g.eredmeny==='PASS'?'ok':'')}"><b>${g.fazis} #${g.proba}</b><span>${dLabel(g.kezdet)} → ${dLabel(g.veg)} · ${g.napok} nap</span><span class="num ${cls(g.pnl)}">${fmtUsd(g.pnl)}</span>${g.kifizetes_db?`<span class="pay">kifizetve ${fmtUsd(g.kifizetes)} (${g.kifizetes_db}×)</span>`:''}<span class="res">${r}</span></div>`;};
+  el.innerHTML=`<h2><span>Életciklus — próbálkozások</span><span class="sub">most: ${L.most} #${L.proba_most||''}</span></h2><div class="segs">${L.idovonal.map(chip).join('<span class="arr">›</span>')}</div>`;
 }
 function renderKpis(st){
   const k=[['Összes P&L',fmtUsd(st.total),cls(st.total)],['Trade-ek',st.n,''],['Nyerési arány',st.wr==null?'–':Math.round(st.wr*100)+'%',''],['Profit factor',st.pf==null?'–':(st.pf===Infinity?'∞':fmtNum(st.pf)),''],
@@ -172,6 +231,10 @@ function renderCal(st){
   const [y,m]=S.month.split('-').map(Number); const first=new Date(y,m-1,1), last=new Date(y,m,0);
   $('mLabel').textContent=first.toLocaleDateString('hu-HU',{year:'numeric',month:'long'});
   const cnt={}; for(const t of trades()) cnt[t.nap]=(cnt[t.nap]||0)+1;
+  // 2026-10-21: a számla-események a naptárban (PASS → új eval, bukás → újraindul, kifizetés, stratégia-váltás)
+  const evd={}; const bsel=bots().find(x=>x.id===S.bot); const sz=bsel?src(bsel).szamla:null; const nf=(bsel&&src(bsel).eletciklus&&src(bsel).eletciklus.napfazis)||{};
+  for(const e of ((sz&&sz.esemenyek)||[]).filter(e=>bf()||!/^\[visszamenőleges\]/.test(e.esemeny))){ const m=/PASS/.test(e.esemeny)?['pass','PASS → új']:/BUKÁS/.test(e.esemeny)?['bust','BUKÁS → új']:/KIFIZET/.test(e.esemeny)?['pay','KIFIZETÉS']:/VÁLTÁS/.test(e.esemeny)?['sw','VÁLTÁS']:null;
+    if(m){ (evd[e.nap]=evd[e.nap]||[]).push(m); } }
   let start=new Date(first); start.setDate(start.getDate()-((start.getDay()+6)%7));
   let html=['H','K','Sze','Cs','P','Hét'].map(h=>`<div class="h">${h}</div>`).join(''); const today=todayNY(); let mTot=0,mW=0,mL=0;
   for(let d=new Date(start); d<=last || d.getDay()!==1; ){
@@ -179,7 +242,7 @@ function renderCal(st){
     for(let i=0;i<7;i++){
       const iso=new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); const inM=d.getMonth()===m-1;
       if(i<5){ const v=st.days[iso]; const has=v!=null; if(has){wk+=v;wkN+=cnt[iso]||0; if(inM){mTot+=v; if(v>0)mW++; else if(v<0)mL++;}}
-        html+=`<div class="d ${has?(v>0?'w':(v<0?'l':'')):''} ${has?'has':''} ${inM?'':'out'} ${S.day===iso?'sel':''} ${iso===today?'today':''}" ${has?`data-d="${iso}" role="button" tabindex="0"`:''}><span class="dn">${d.getDate()}</span>${has?`<span><div class="pl ${cls(v)}">${fmtUsd(v)}</div><div class="nt">${cnt[iso]||0} trade</div></span>`:''}</div>`; }
+        html+=`<div class="d ${has?(v>0?'w':(v<0?'l':'')):''} ${has?'has':''} ${nf[iso]==='FUNDED'?'pf':(nf[iso]==='EVAL'?'pe':'')} ${inM?'':'out'} ${S.day===iso?'sel':''} ${iso===today?'today':''}" ${has?`data-d="${iso}" role="button" tabindex="0"`:''}><span class="dn">${d.getDate()}</span>${has?`<span><div class="pl ${cls(v)}">${fmtUsd(v)}</div><div class="nt">${cnt[iso]||0} trade</div></span>`:''}${(evd[iso]||[]).map(([c,l])=>`<div class="evb ${c}">${l}</div>`).join('')}</div>`; }
       else { const v=st.days[iso]; if(v!=null){wk+=v;wkN+=cnt[iso]||0;} }
       d.setDate(d.getDate()+1);
     }
@@ -206,6 +269,7 @@ function renderEq(st){
   $('eqLabel').innerHTML=`<span class="num ${cls(end)}">${fmtUsd(end)}</span>`;
 }
 function renderOpen(){
+  if(bf()){ $('open').innerHTML='<div class="empty">Visszamenőleges nézet — élő pozíció az „Élő papír" nézetben.</div>'; $('status').innerHTML=''; return; }
   const list=[]; for(const b of bots()) if(S.bot==='all'||S.bot===b.id) for(const o of b.nyitott||[]) list.push({...o,bot:b.nev});
   $('open').innerHTML=list.length?list.map(o=>`<div class="op"><span>${o.side!=null?`<span class="pill ${o.side>0?'L':'S'}">${o.side>0?'Long':'Short'}</span> `:''}<span class="tag">${o.bot}</span> ${o.id||''}</span><span class="num">${o.qty?o.qty+' db · ':''}${o.entry!=null?'@ '+fmtNum(o.entry):''}${o.stop!=null?' · stop '+fmtNum(o.stop):''}${o.cel!=null?' · cél '+fmtNum(o.cel):''}</span><span class="sub">${tShort(o.t_entry)}</span></div>`).join(''):'<div class="empty">Nincs nyitott pozíció.</div>';
   const st=bots().filter(b=>S.bot==='all'||S.bot===b.id).map(b=>{const a=b.allapot||{}; return `<span><span class="dot ${a.fut?'on':''}" style="display:inline-block;margin-right:6px"></span><b>${b.nev}</b>: ${a.fut?'fut':'nem fut'}${a.heartbeat?` · utolsó jelzés a bottól ${tShort(a.heartbeat)} (${a.kor_perc<120?Math.round(a.kor_perc)+' perce':Math.round(a.kor_perc/60)+' órája'})`:' · még nem indult'}${a.ea_utolso_jel!==undefined?` · EA utolsó jele: ${a.ea_utolso_jel?tShort(a.ea_utolso_jel):'még nincs'}`:''}</span>`});
@@ -217,9 +281,9 @@ function renderTable(){
   $('fSl').onchange=e=>{S.sleeve=e.target.value;renderTable();}; if(S.day) $('clrDay').onclick=()=>{S.day=null;render();};
   if(S.sleeve) ts=ts.filter(t=>t.sleeve===S.sleeve); if(S.day) ts=ts.filter(t=>t.nap===S.day);
   const k=S.sort.k, d=S.sort.d; ts.sort((a,b)=>{const x=a[k],y=b[k]; return (x>y?1:x<y?-1:0)*d;});
-  const cols=[['nap','Nap'],['bot','Bot'],['sleeve','Stratégia'],['side','Irány'],['qty','Db'],['t_entry','Belépés'],['entry','Ár'],['t_exit','Kilépés'],['exit','Ár'],['pts','Pont'],['usd','P&L'],['R','R'],['ok','Kilépés oka']];
+  const cols=[['nap','Nap'],['fazis','Fázis'],['sleeve','Stratégia'],['side','Irány'],['qty','Db'],['t_entry','Belépés'],['entry','Ár'],['t_exit','Kilépés'],['exit','Ár'],['pts','Pont'],['usd','P&L'],['R','R'],['ok','Kilépés oka']];
   $('tbl').innerHTML=`<thead><tr>${cols.map(([c,l])=>`<th data-k="${c}">${l}${S.sort.k===c?(S.sort.d>0?' ▲':' ▼'):''}</th>`).join('')}</tr></thead><tbody>${ts.length?ts.map(t=>`<tr>
-    <td>${t.nap?dLabel(t.nap):'–'}</td><td><span class="tag">${t.bot}</span></td><td>${t.sleeve||''}</td><td><span class="pill ${t.side>0?'L':'S'}">${t.side>0?'Long':'Short'}</span></td>
+    <td>${t.nap?dLabel(t.nap):'–'}</td><td>${t.fazis?`<span class="tag ${t.fazis==='FUNDED'?'tf':'te'}">${t.fazis}</span>`:''}</td><td>${t.sleeve||''}</td><td><span class="pill ${t.side>0?'L':'S'}">${t.side>0?'Long':'Short'}</span></td>
     <td class="n">${t.qty??''}</td><td class="mono">${tShort(t.t_entry)}</td><td class="n">${fmtNum(t.entry)}</td><td class="mono">${tShort(t.t_exit)}</td><td class="n">${fmtNum(t.exit)}</td>
     <td class="n ${cls(t.pts)}">${fmtNum(t.pts)}</td><td class="n ${cls(t.usd)}"><b>${fmtUsd(t.usd)}</b></td><td class="n ${cls(t.R)}">${t.R==null?'–':fmtNum(t.R)}</td><td>${t.ok||''}</td></tr>`).join(''):`<tr><td colspan="${cols.length}" class="empty">Nincs trade ezzel a szűréssel.</td></tr>`}</tbody>`;
   $('tbl').querySelectorAll('th').forEach(th=>th.onclick=()=>{const c=th.dataset.k; S.sort={k:c,d:S.sort.k===c?-S.sort.d:-1}; renderTable();});
@@ -230,9 +294,9 @@ function renderSigs(){
   list.sort((a,b)=>(a.t<b.t?1:-1));
   $('sigs').innerHTML=list.length?list.slice(0,400).map(s=>`<div class="sig"><span class="mono">${tShort(s.t)}</span><span class="tag">${s.bot}</span><span>${s.side?`<span class="pill ${s.side>0?'L':'S'}">${s.side>0?'Long':'Short'}</span>`:''}</span><span>${s.mit||''}</span><span class="sub">${s.miert||''}${s.sleeve?' · '+s.sleeve:''}</span></div>`).join(''):'<div class="empty">Nincs jel.</div>';
 }
-function render(){ if(!S.data) return; const st=stats(trades()); renderTabs(); renderKpis(st); renderCal(st); renderEq(st); renderOpen(); renderTable(); if($('sigBox').open) renderSigs(); }
+function render(){ if(!S.data) return; const st=stats(trades()); renderTabs(); renderAcct(); renderLife(); renderKpis(st); renderCal(st); renderEq(st); renderOpen(); renderTable(); if($('sigBox').open) renderSigs(); }
 async function load(){
-  try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); S.data=await r.json(); $('err').innerHTML='';
+  try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); S.data=await r.json(); $('err').innerHTML=''; if(!bots().some(b=>b.id===S.bot)&&bots().length) S.bot=bots()[0].id;
     $('upd').textContent='Frissítve (a Pi-n): '+new Date(S.data.keszult).toLocaleString('hu-HU',{timeZone:'America/New_York',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+' NY · az oldal percenként újratölt'; render(); }
   catch(e){ $('err').innerHTML=`<div class="err">Az adat nem tölthető be (${e.message}). A Pi 5 percenként tölti fel; ha ez tartósan fennáll, a Pi vagy a crontab nem fut.</div>`; }
 }
