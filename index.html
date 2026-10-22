@@ -192,8 +192,8 @@ function stats(ts){
 }
 function renderTabs(){
   const all=bots();   // 2026-10-20 (user): nincs összesítő fül, csak a két külön beállítás (EVAL, FUNDED)
-  $('tabs').innerHTML=all.map(b=>{const tot=live(b.trades).reduce((a,t)=>a+(t.usd||0),0); const on=b.allapot&&b.allapot.fut;
-    return `<button class="tab" role="tab" aria-selected="${S.bot===b.id}" data-id="${b.id}"><span class="t">${b.allapot?`<span class="dot ${on?'on':''}" title="${on?'fut':'nem fut'}"></span>`:''}${b.nev}${b.szamla?phaseBadge(b.szamla):''}</span><span class="p num ${cls(tot)}">${fmtUsd(tot)} · ${live(b.trades).length} trade</span></button>`}).join('');
+  $('tabs').innerHTML=all.map(b=>{const sim=!!(b.allapot&&b.allapot.szimulacio); const tl=sim?b.trades:live(b.trades); const tot=tl.reduce((a,t)=>a+(t.usd||0),0); const on=b.allapot&&b.allapot.fut;
+    return `<button class="tab" role="tab" aria-selected="${S.bot===b.id}" data-id="${b.id}"><span class="t">${b.allapot?`<span class="dot ${on?'on':''}" title="${on?'fut':'nem fut'}"></span>`:''}${b.nev}${b.szamla?phaseBadge(b.szamla):''}</span><span class="p num ${cls(tot)}">${fmtUsd(tot)} · ${tl.length} trade${sim?' · szimuláció':''}</span></button>`}).join('');
   $('tabs').querySelectorAll('.tab').forEach(el=>el.onclick=()=>{S.bot=el.dataset.id;S.day=null;S.sleeve='';S.month=null;render();});   // 2026-10-22: fülváltásnál a naptár az adott bot utolsó adatos hónapjára ugrik (a szimulációs botok 2026-03-ig érnek)
   const b=bots().find(x=>x.id===S.bot); $('desc').textContent=b?b.leiras:'Az összes papír bot együtt. Minden $-érték költséggel, Topstep-nap szerint (18:00 ET-tól).';
   const vs=$('viewsw'); if(!b||!b.bf){ vs.hidden=true; if(bf()||allv()) S.view='live'; return; }
@@ -211,7 +211,7 @@ function renderAcct(){
   const open_=bf()?0:live(b.trades).filter(t=>t.usd!=null&&(!cut||t.nap>cut)).reduce((x,t)=>x+t.usd,0), bal=a.egyenleg+open_, room=bal-a.padlo;
   const ev=(a.esemenyek||[]).filter(e=>bf()||allv()||!/^\[visszamenőleges\]/.test(e.esemeny)).map(e=>{const ok=/PASS \(|KIFIZET/.test(e.esemeny), bad=/BUKÁS/.test(e.esemeny);
     return `<li class="${ok?'ok':(bad?'bad':'')}"><span class="d">${dLabel(e.nap)}</span><b>${e.esemeny}</b><span class="num">${fmtUsd(e.pnl)} · egyenleg ${fmtUsd(e.egyenleg)}</span></li>`}).join('');
-  el.innerHTML=`${bf()||allv()?`<div class="bfnote"><b>${allv()?'A visszamenőleges rész (07-20 → 10-19) a bot kódjával utólag lejátszva, a 10-20 utáni rész élő papír':'Visszamenőleges szimuláció'}</b> · ${x.idoszak||''} · ${x.leiras||''}</div>`:''}<div class="phase"><span class="big ${f?'funded':'eval'}">${f?'FUNDED':'EVAL'}</span><span class="sub">${f?'#'+(a.proba||1)+' funded · MLL $2 000, rögzül $0-n':'#'+(a.proba||1)+' eval · cél +$3 000, legjobb nap ≤ 55 % · PASS-nál nullázódik'}${a.fazis_kezdete?' · fázis kezdete: '+dLabel(a.fazis_kezdete)+' után':''}</span>${a.leallitva?`<span class="badge stop">${a.leallitva}</span>`:''}</div>
+  el.innerHTML=`${bf()||allv()?`<div class="bfnote"><b>${(b.allapot&&b.allapot.szimulacio)?'SZIMULÁCIÓ — nem élő kereskedés, a bot kódjával lejátszva':(allv()?'A visszamenőleges rész (07-20 → 10-19) a bot kódjával utólag lejátszva, a 10-20 utáni rész élő papír':'Visszamenőleges szimuláció')}</b> · ${x.idoszak||''}${(b.allapot&&b.allapot.szimulacio)?'':' · '+(x.leiras||'')}</div>`:''}<div class="phase"><span class="big ${f?'funded':'eval'}">${f?'FUNDED':'EVAL'}</span><span class="sub">${f?'#'+(a.proba||1)+' funded · MLL $2 000, rögzül $0-n':'#'+(a.proba||1)+' eval · cél +$3 000, legjobb nap ≤ 55 % · PASS-nál nullázódik'}${a.fazis_kezdete?' · fázis kezdete: '+dLabel(a.fazis_kezdete)+' után':''}</span>${a.leallitva?`<span class="badge stop">${a.leallitva}</span>`:''}</div>
   <div class="row"><div><span>Egyenleg (fázis, a mai realizálttal)</span><b class="num ${cls(bal)}">${fmtUsd(bal)}</b></div><div><span>Padló (MLL)</span><b class="num">${fmtUsd(a.padlo)}</b></div>
   <div><span>Tartalék</span><b class="num">${fmtUsd(room)}</b></div><div><span>Szorzó (ma)</span><b class="num">${a.szorzo_ma?'×'+fmtNum(a.szorzo_ma,a.szorzo_ma%1?2:0):(a.szorzo?'×'+fmtNum(a.szorzo,a.szorzo%1?2:0):'–')}</b></div>
   ${f?`<div><span>Kifizetve</span><b class="num ${a.kifizetve>0?'pos':''}">${fmtUsd(a.kifizetve)} (${a.kifizetes_db})</b></div>`:`<div><span>Átment (PASS)</span><b class="num ${a.passok>0?'pos':''}">${a.passok||0}</b></div>`}<div><span>Bukások</span><b class="num">${a.bukasok}</b></div></div>
@@ -222,8 +222,8 @@ function renderAcct(){
 function renderLife(){
   const b=bots().find(x=>x.id===S.bot), el=$('life'); const L=b?src(b).eletciklus:null;
   if(!L||!L.idovonal||!L.idovonal.length){ el.hidden=true; return; } el.hidden=false;
-  const chip=g=>{const c=g.fazis==='FUNDED'?'f':'e', r=g.eredmeny==='PASS'?'PASS → FUNDED':g.eredmeny==='BUKÁS'?'BUKÁS → új EVAL':g.eredmeny==='VÁLTÁS'?'stratégia-váltás':'folyamatban';
-    return `<div class="seg ${c} ${g.eredmeny==='BUKÁS'?'bad':(g.eredmeny==='PASS'?'ok':'')}"><b>${g.fazis} #${g.proba}</b><span>${dLabel(g.kezdet)} → ${dLabel(g.veg)} · ${g.napok} nap</span><span class="num ${cls(g.pnl)}">${fmtUsd(g.pnl)}</span>${g.kifizetes_db?`<span class="pay">kifizetve ${fmtUsd(g.kifizetes)} (${g.kifizetes_db}×)</span>`:''}<span class="res">${r}</span></div>`;};
+  const chip=g=>{const c=g.fazis==='FUNDED'?'f':'e', r=g.eredmeny==='PASS'?'PASS → FUNDED':g.eredmeny==='BUKÁS'?'BUKÁS → új EVAL':g.eredmeny==='VÁLTÁS'?'stratégia-váltás':g.eredmeny==='LIVE'?'5 kifizetés → LIVE (új EVAL)':'folyamatban';
+    return `<div class="seg ${c} ${g.eredmeny==='BUKÁS'?'bad':((g.eredmeny==='PASS'||g.eredmeny==='LIVE')?'ok':'')}"><b>${g.fazis} #${g.proba}</b><span>${dLabel(g.kezdet)} → ${dLabel(g.veg)} · ${g.napok} nap</span><span class="num ${cls(g.pnl)}">${fmtUsd(g.pnl)}</span>${g.kifizetes_db?`<span class="pay">kifizetve ${fmtUsd(g.kifizetes)} (${g.kifizetes_db}×)</span>`:''}<span class="res">${r}</span></div>`;};
   el.innerHTML=`<h2><span>Életciklus — próbálkozások</span><span class="sub">most: ${L.most} #${L.proba_most||''}</span></h2><div class="segs">${L.idovonal.map(chip).join('<span class="arr">›</span>')}</div>`;
 }
 function renderKpis(st){
