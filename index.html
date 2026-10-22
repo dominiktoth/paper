@@ -194,7 +194,7 @@ function renderTabs(){
   const all=bots();   // 2026-10-20 (user): nincs összesítő fül, csak a két külön beállítás (EVAL, FUNDED)
   $('tabs').innerHTML=all.map(b=>{const tot=live(b.trades).reduce((a,t)=>a+(t.usd||0),0); const on=b.allapot&&b.allapot.fut;
     return `<button class="tab" role="tab" aria-selected="${S.bot===b.id}" data-id="${b.id}"><span class="t">${b.allapot?`<span class="dot ${on?'on':''}" title="${on?'fut':'nem fut'}"></span>`:''}${b.nev}${b.szamla?phaseBadge(b.szamla):''}</span><span class="p num ${cls(tot)}">${fmtUsd(tot)} · ${live(b.trades).length} trade</span></button>`}).join('');
-  $('tabs').querySelectorAll('.tab').forEach(el=>el.onclick=()=>{S.bot=el.dataset.id;S.day=null;S.sleeve='';render();});
+  $('tabs').querySelectorAll('.tab').forEach(el=>el.onclick=()=>{S.bot=el.dataset.id;S.day=null;S.sleeve='';S.month=null;render();});   // 2026-10-22: fülváltásnál a naptár az adott bot utolsó adatos hónapjára ugrik (a szimulációs botok 2026-03-ig érnek)
   const b=bots().find(x=>x.id===S.bot); $('desc').textContent=b?b.leiras:'Az összes papír bot együtt. Minden $-érték költséggel, Topstep-nap szerint (18:00 ET-tól).';
   const vs=$('viewsw'); if(!b||!b.bf){ vs.hidden=true; if(bf()||allv()) S.view='live'; return; }
   vs.hidden=false; const tb=b.bf.trades.reduce((a,t)=>a+(t.usd||0),0);
