@@ -209,7 +209,7 @@ function renderAcct(){
   const a=x.szamla, f=a.fazis==='FUNDED'; el.hidden=false;
   const cut=[a.lezart_nap,a.fazis_kezdete].filter(Boolean).sort().pop()||null;   // a még le nem zárt (mai) napok realizáltja: a politika csak napzárkor könyvel
   const open_=bf()?0:live(b.trades).filter(t=>t.usd!=null&&(!cut||t.nap>cut)).reduce((x,t)=>x+t.usd,0), bal=a.egyenleg+open_, room=bal-a.padlo;
-  const ev=(a.esemenyek||[]).filter(e=>bf()||allv()||!/^\[visszamenőleges\]/.test(e.esemeny)).map(e=>{const ok=/PASS|KIFIZET/.test(e.esemeny), bad=/BUKÁS/.test(e.esemeny);
+  const ev=(a.esemenyek||[]).filter(e=>bf()||allv()||!/^\[visszamenőleges\]/.test(e.esemeny)).map(e=>{const ok=/PASS \(|KIFIZET/.test(e.esemeny), bad=/BUKÁS/.test(e.esemeny);
     return `<li class="${ok?'ok':(bad?'bad':'')}"><span class="d">${dLabel(e.nap)}</span><b>${e.esemeny}</b><span class="num">${fmtUsd(e.pnl)} · egyenleg ${fmtUsd(e.egyenleg)}</span></li>`}).join('');
   el.innerHTML=`${bf()||allv()?`<div class="bfnote"><b>${allv()?'A visszamenőleges rész (07-20 → 10-19) a bot kódjával utólag lejátszva, a 10-20 utáni rész élő papír':'Visszamenőleges szimuláció'}</b> · ${x.idoszak||''} · ${x.leiras||''}</div>`:''}<div class="phase"><span class="big ${f?'funded':'eval'}">${f?'FUNDED':'EVAL'}</span><span class="sub">${f?'#'+(a.proba||1)+' funded · MLL $2 000, rögzül $0-n':'#'+(a.proba||1)+' eval · cél +$3 000, legjobb nap ≤ 55 % · PASS-nál nullázódik'}${a.fazis_kezdete?' · fázis kezdete: '+dLabel(a.fazis_kezdete)+' után':''}</span>${a.leallitva?`<span class="badge stop">${a.leallitva}</span>`:''}</div>
   <div class="row"><div><span>Egyenleg (fázis, a mai realizálttal)</span><b class="num ${cls(bal)}">${fmtUsd(bal)}</b></div><div><span>Padló (MLL)</span><b class="num">${fmtUsd(a.padlo)}</b></div>
@@ -238,7 +238,7 @@ function renderCal(st){
   const cnt={}; for(const t of trades()) cnt[t.nap]=(cnt[t.nap]||0)+1;
   // 2026-10-21: a számla-események a naptárban (PASS → új eval, bukás → újraindul, kifizetés, stratégia-váltás)
   const evd={}; const bsel=bots().find(x=>x.id===S.bot); const sz=bsel?src(bsel).szamla:null; const nf=(bsel&&src(bsel).eletciklus&&src(bsel).eletciklus.napfazis)||{};
-  for(const e of ((sz&&sz.esemenyek)||[]).filter(e=>bf()||allv()||!/^\[visszamenőleges\]/.test(e.esemeny))){ const m=/PASS/.test(e.esemeny)?['pass','PASS → új']:/BUKÁS/.test(e.esemeny)?['bust','BUKÁS → új']:/KIFIZET/.test(e.esemeny)?['pay','KIFIZETÉS']:/VÁLTÁS/.test(e.esemeny)?['sw','VÁLTÁS']:null;
+  for(const e of ((sz&&sz.esemenyek)||[]).filter(e=>bf()||allv()||!/^\[visszamenőleges\]/.test(e.esemeny))){ const m=/PASS \(/.test(e.esemeny)?['pass','PASS → új']:/BUKÁS/.test(e.esemeny)?['bust','BUKÁS → új']:/KIFIZET/.test(e.esemeny)?['pay','KIFIZETÉS']:/VÁLTÁS/.test(e.esemeny)?['sw','VÁLTÁS']:null;
     if(m){ (evd[e.nap]=evd[e.nap]||[]).push(m); } }
   let start=new Date(first); start.setDate(start.getDate()-((start.getDay()+6)%7));
   let html=['H','K','Sze','Cs','P','Hét'].map(h=>`<div class="h">${h}</div>`).join(''); const today=todayNY(); let mTot=0,mW=0,mL=0;
