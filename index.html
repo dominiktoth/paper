@@ -301,7 +301,10 @@ function renderSigs(){
 }
 function render(){ if(!S.data) return; const st=stats(trades()); renderTabs(); renderAcct(); renderLife(); renderKpis(st); renderCal(st); renderEq(st); renderOpen(); renderTable(); if($('sigBox').open) renderSigs(); }
 async function load(){
-  try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); S.data=await r.json(); $('err').innerHTML=''; if(!bots().some(b=>b.id===S.bot)&&bots().length) S.bot=bots()[0].id;
+  try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); S.data=await r.json(); $('err').innerHTML='';
+    // 2026-10-22: a DP-számla-politika SZIMULÁCIÓS botja a repóból (dp_sim.json, a Mac építi: paper/build_dp_sim_json.py) — a Pi data.json-ja mellé
+    try{ const r2=await fetch('dp_sim.json?t='+Date.now(),{cache:'no-store'}); if(r2.ok){ const d2=await r2.json(); const ids=new Set(S.data.botok.map(b=>b.id)); for(const b of (d2.botok||[])){ if(!ids.has(b.id)) S.data.botok.push(b); } } }catch(e){}
+    if(!bots().some(b=>b.id===S.bot)&&bots().length) S.bot=bots()[0].id;
     $('upd').textContent='Frissítve (a Pi-n): '+new Date(S.data.keszult).toLocaleString('hu-HU',{timeZone:'America/New_York',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+' NY · az oldal percenként újratölt'; render(); }
   catch(e){ $('err').innerHTML=`<div class="err">Az adat nem tölthető be (${e.message}). A Pi 5 percenként tölti fel; ha ez tartósan fennáll, a Pi vagy a crontab nem fut.</div>`; }
 }
