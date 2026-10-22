@@ -203,6 +203,7 @@ function renderTabs(){
   vs.innerHTML=`<button type="button" class="vbtn" aria-pressed="${allv()}" data-v="all">Teljes életciklus (${b.trades.length} trade)</button><button type="button" class="vbtn" aria-pressed="${S.view==='live'}" data-v="live">Csak élő (${live(b.trades).length})</button><button type="button" class="vbtn" aria-pressed="${bf()}" data-v="bf">Csak visszamenőleges · ${b.bf.idoszak||''} (${b.bf.trades.length}, <span class="num ${cls(tb)}">${fmtUsd(tb)}</span>)</button>`;
   vs.querySelectorAll('.vbtn').forEach(el=>el.onclick=()=>{S.view=el.dataset.v;S.day=null;S.month=null;S.sleeve='';render();});
 }
+const RRD={low:'po 1R · rsi 0,3R · ftm 1R', mid:'po 2R · rsi 0,5R · ftm natív', high:'po 3R · rsi 1R · ftm natív'};   // propkit/dp_policy.py RR_SETS
 function phaseBadge(a){ return a.leallitva?'<span class="badge stop">LEÁLLÍTVA</span>':`<span class="badge ${a.fazis==='FUNDED'?'funded':'eval'}">${a.fazis==='FUNDED'?'FUNDED':'EVAL #'+(a.proba||1)}</span>`; }
 function renderAcct(){
   const b=bots().find(x=>x.id===S.bot), el=$('acct');
@@ -213,9 +214,9 @@ function renderAcct(){
   const open_=bf()?0:live(b.trades).filter(t=>t.usd!=null&&(!cut||t.nap>cut)).reduce((x,t)=>x+t.usd,0), bal=a.egyenleg+open_, room=bal-a.padlo;
   const ev=(a.esemenyek||[]).filter(e=>bf()||allv()||!/^\[visszamenőleges\]/.test(e.esemeny)).map(e=>{const ok=/PASS \(|KIFIZET/.test(e.esemeny), bad=/BUKÁS/.test(e.esemeny);
     return `<li class="${ok?'ok':(bad?'bad':'')}"><span class="d">${dLabel(e.nap)}</span><b>${e.esemeny}</b><span class="num">${fmtUsd(e.pnl)} · egyenleg ${fmtUsd(e.egyenleg)}</span></li>`}).join('');
-  el.innerHTML=`${bf()||allv()?`<div class="bfnote"><b>${(b.allapot&&b.allapot.szimulacio)?'SZIMULÁCIÓ — nem élő kereskedés, a bot kódjával lejátszva':(allv()?'A visszamenőleges rész (07-20 → 10-19) a bot kódjával utólag lejátszva, a 10-20 utáni rész élő papír':'Visszamenőleges szimuláció')}</b> · ${x.idoszak||''}${(b.allapot&&b.allapot.szimulacio)?'':' · '+(x.leiras||'')}</div>`:''}<div class="phase"><span class="big ${f?'funded':'eval'}">${f?'FUNDED':'EVAL'}</span><span class="sub">${f?'#'+(a.proba||1)+' funded · MLL $2 000, rögzül $0-n':'#'+(a.proba||1)+' eval · cél +$3 000, legjobb nap ≤ 55 % · PASS-nál nullázódik'}${a.fazis_kezdete?' · fázis kezdete: '+dLabel(a.fazis_kezdete)+' után':''}</span>${a.leallitva?`<span class="badge stop">${a.leallitva}</span>`:''}</div>
+  el.innerHTML=`${bf()||allv()?`<div class="bfnote"><b>${(b.allapot&&b.allapot.szimulacio)?'SZIMULÁCIÓ — nem élő kereskedés, a bot kódjával lejátszva':(allv()?`A visszamenőleges rész (${b.bf.idoszak||''}) a bot kódjával utólag lejátszva, ${b.bf.elo_kezdet?b.bf.elo_kezdet+'-tól':'utána'} élő papír${b.bf.elo_kezdet?' (friss Combine-ból)':''}`:'Visszamenőleges szimuláció')}</b>${x.idoszak?' · '+x.idoszak:''}${(b.allapot&&b.allapot.szimulacio)?'':' · '+(x.leiras||'')}</div>`:''}<div class="phase"><span class="big ${f?'funded':'eval'}">${f?'FUNDED':'EVAL'}</span><span class="sub">${f?'#'+(a.proba||1)+' funded · MLL $2 000, rögzül $0-n':'#'+(a.proba||1)+' eval · cél +$3 000, legjobb nap ≤ 50 %'}${a.fazis_kezdete?' · fázis kezdete: '+dLabel(a.fazis_kezdete)+' után':''}</span>${a.leallitva?`<span class="badge stop">${a.leallitva}</span>`:''}</div>
   <div class="row"><div><span>Egyenleg (fázis, a mai realizálttal)</span><b class="num ${cls(bal)}">${fmtUsd(bal)}</b></div><div><span>Padló (MLL)</span><b class="num">${fmtUsd(a.padlo)}</b></div>
-  <div><span>Tartalék</span><b class="num">${fmtUsd(room)}</b></div><div><span>Szorzó (ma)</span><b class="num">${a.szorzo_ma?'×'+fmtNum(a.szorzo_ma,a.szorzo_ma%1?2:0):(a.szorzo?'×'+fmtNum(a.szorzo,a.szorzo%1?2:0):'–')}</b></div>
+  <div><span>Tartalék</span><b class="num">${fmtUsd(room)}</b></div>${a.rr_ma&&!bf()?`<div><span>R:R-készlet (ma, DP-tábla)</span><b>${a.rr_ma} <span class="sub">${RRD[a.rr_ma]||''}</span></b></div>`:''}<div><span>Szorzó (ma)</span><b class="num">${a.szorzo_ma?'×'+fmtNum(a.szorzo_ma,a.szorzo_ma%1?2:0):(a.szorzo?'×'+fmtNum(a.szorzo,a.szorzo%1?2:0):'–')}</b></div>
   ${f?`<div><span>Kifizetve</span><b class="num ${a.kifizetve>0?'pos':''}">${fmtUsd(a.kifizetve)} (${a.kifizetes_db})</b></div>`:`<div><span>Átment (PASS)</span><b class="num ${a.passok>0?'pos':''}">${a.passok||0}</b></div>`}<div><span>Bukások</span><b class="num">${a.bukasok}</b></div></div>
   ${bf()?'':`<label><input type="checkbox" id="phaseOnly" ${S.phaseOnly?'checked':''}> csak a mostani fázis trade-jei (naptár, görbe, tábla)</label>`}
   ${ev?`<ul style="margin-top:8px">${ev}</ul>`:'<div class="sub" style="margin-top:8px">Még nincs PASS, kifizetés vagy bukás.</div>'}`;
@@ -304,10 +305,17 @@ function renderSigs(){
   $('sigs').innerHTML=list.length?list.slice(0,400).map(s=>`<div class="sig"><span class="mono">${tShort(s.t)}</span><span class="tag">${s.bot}</span><span>${s.side?`<span class="pill ${s.side>0?'L':'S'}">${s.side>0?'Long':'Short'}</span>`:''}</span><span>${s.mit||''}</span><span class="sub">${s.miert||''}${s.sleeve?' · '+s.sleeve:''}</span></div>`).join(''):'<div class="empty">Nincs jel.</div>';
 }
 function render(){ if(!S.data) return; const st=stats(trades()); renderTabs(); renderAcct(); renderLife(); renderKpis(st); renderCal(st); renderEq(st); renderOpen(); renderTable(); if($('sigBox').open) renderSigs(); }
+const STATIC={};   // a repó statikus fájljai oldalbetöltésenként EGYSZER (a data.json percenként frissül, ezek nem)
+function loadStatic(name){ if(!(name in STATIC)) STATIC[name]=fetch(name,{cache:'no-cache'}).then(r=>r.ok?r.json():null).catch(()=>null); return STATIC[name]; }   // az ígéretet tároljuk → egymást átfedő betöltések sem töltik le kétszer
+function attachBf(b,x){   // a visszamenőleges trade-ek a fő listába is (…_bf), az események „[visszamenőleges]” jelöléssel a számla-listába — mint a Pi-n épített bf-nél
+  b.bf=x; b.trades=[...x.trades, ...b.trades];
+  if(b.szamla&&x.szamla) b.szamla={...b.szamla, esemenyek:[...(b.szamla.esemenyek||[]), ...(x.szamla.esemenyek||[]).map(e=>({...e, esemeny:'[visszamenőleges] '+e.esemeny}))]}; }
 async function load(){
   try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); S.data=await r.json(); $('err').innerHTML='';
     // 2026-10-22: a DP-számla-politika SZIMULÁCIÓS botja a repóból (dp_sim.json, a Mac építi: paper/build_dp_sim_json.py) — a Pi data.json-ja mellé
-    try{ const r2=await fetch('dp_sim.json?t='+Date.now(),{cache:'no-store'}); if(r2.ok){ const d2=await r2.json(); const ids=new Set(S.data.botok.map(b=>b.id)); for(const b of (d2.botok||[])){ if(!ids.has(b.id)) S.data.botok.push(b); } } }catch(e){}
+    const d2=await loadStatic('dp_sim.json'); if(d2){ const ids=new Set(S.data.botok.map(b=>b.id)); for(const b of (d2.botok||[])){ if(!ids.has(b.id)) S.data.botok.push(b); } }
+    // 2026-10-22: a DP-papír-bot visszamenőleges része (5,5 év, a bot kódjával) a repóból — a Pi data.json-ja csak az élő részt hozza (bf_static)
+    for(const b of S.data.botok){ if(b.bf_static&&!b.bf){ const x=await loadStatic(b.bf_static); if(x) attachBf(b,x); } }
     if(!bots().some(b=>b.id===S.bot)&&bots().length) S.bot=bots()[0].id;
     $('upd').textContent='Frissítve (a Pi-n): '+new Date(S.data.keszult).toLocaleString('hu-HU',{timeZone:'America/New_York',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+' NY · az oldal percenként újratölt'; render(); }
   catch(e){ $('err').innerHTML=`<div class="err">Az adat nem tölthető be (${e.message}). A Pi 5 percenként tölti fel; ha ez tartósan fennáll, a Pi vagy a crontab nem fut.</div>`; }
