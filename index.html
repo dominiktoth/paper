@@ -196,7 +196,7 @@ function renderTabs(){
   const all=bots();   // 2026-10-20 (user): nincs összesítő fül, csak a két külön beállítás (EVAL, FUNDED)
   $('tabs').innerHTML=all.map(b=>{const sim=!!(b.allapot&&b.allapot.szimulacio); const tl=sim?b.trades:live(b.trades); const tot=tl.reduce((a,t)=>a+(t.usd||0),0); const on=b.allapot&&b.allapot.fut;
     return `<button class="tab" role="tab" aria-selected="${S.bot===b.id}" data-id="${b.id}"><span class="t">${b.allapot?`<span class="dot ${on?'on':''}" title="${on?'fut':'nem fut'}"></span>`:''}${b.nev}${b.szamla?phaseBadge(b.szamla):''}</span><span class="p num ${cls(tot)}">${fmtUsd(tot)} · ${tl.length} trade${sim?' · szimuláció':''}</span></button>`}).join('');
-  $('tabs').querySelectorAll('.tab').forEach(el=>el.onclick=()=>{S.bot=el.dataset.id;S.day=null;S.sleeve='';S.month=null;render();});   // 2026-10-22: fülváltásnál a naptár az adott bot utolsó adatos hónapjára ugrik (a szimulációs botok 2026-03-ig érnek)
+  $('tabs').querySelectorAll('.tab').forEach(el=>el.onclick=()=>{S.bot=el.dataset.id;S.day=null;S.sleeve='';S.month=null;S.view='all';render();});   // 2026-10-23: fülváltásnál vissza a teljes nézetre (egy visszamenőleges rész nélküli fül eddig tartósan „csak élő”-re állította)   // 2026-10-22: fülváltásnál a naptár az adott bot utolsó adatos hónapjára ugrik (a szimulációs botok 2026-03-ig érnek)
   const b=bots().find(x=>x.id===S.bot); $('desc').textContent=b?b.leiras:'Az összes papír bot együtt. Minden $-érték költséggel, Topstep-nap szerint (18:00 ET-tól).';
   const vs=$('viewsw'); if(!b||!b.bf){ vs.hidden=true; if(bf()||allv()) S.view='live'; return; }
   vs.hidden=false; const tb=b.bf.trades.reduce((a,t)=>a+(t.usd||0),0);
@@ -311,11 +311,12 @@ function attachBf(b,x){   // a visszamenőleges trade-ek a fő listába is (…_
   b.bf=x; b.trades=[...x.trades, ...b.trades];
   if(b.szamla&&x.szamla) b.szamla={...b.szamla, esemenyek:[...(b.szamla.esemenyek||[]), ...(x.szamla.esemenyek||[]).map(e=>({...e, esemeny:'[visszamenőleges] '+e.esemeny}))]}; }
 async function load(){
-  try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); S.data=await r.json(); $('err').innerHTML='';
+  try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); const D=await r.json(); $('err').innerHTML='';   // 2026-10-23: helyi D, és csak a végén S.data = D (két átfedő betöltés nem fűzi kétszer ugyanahhoz)
     // 2026-10-22: a DP-számla-politika SZIMULÁCIÓS botja a repóból (dp_sim.json, a Mac építi: paper/build_dp_sim_json.py) — a Pi data.json-ja mellé
-    const d2=await loadStatic('dp_sim.json'); if(d2){ const ids=new Set(S.data.botok.map(b=>b.id)); for(const b of (d2.botok||[])){ if(!ids.has(b.id)) S.data.botok.push(b); } }
+    const d2=await loadStatic('dp_sim.json'); if(d2){ const ids=new Set(D.botok.map(b=>b.id)); for(const b of (d2.botok||[])){ if(!ids.has(b.id)) D.botok.push(b); } }
     // 2026-10-22: a DP-papír-bot visszamenőleges része (5,5 év, a bot kódjával) a repóból — a Pi data.json-ja csak az élő részt hozza (bf_static)
-    for(const b of S.data.botok){ if(b.bf_static&&!b.bf){ const x=await loadStatic(b.bf_static); if(x) attachBf(b,x); } }
+    for(const b of D.botok){ if(b.bf_static&&!b.bf){ const x=await loadStatic(b.bf_static); if(x&&!b.bf) attachBf(b,x); } }
+    S.data=D;
     if(!bots().some(b=>b.id===S.bot)&&bots().length) S.bot=bots()[0].id;
     $('upd').textContent='Frissítve (a Pi-n): '+new Date(S.data.keszult).toLocaleString('hu-HU',{timeZone:'America/New_York',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+' NY · az oldal percenként újratölt'; render(); }
   catch(e){ $('err').innerHTML=`<div class="err">Az adat nem tölthető be (${e.message}). A Pi 5 percenként tölti fel; ha ez tartósan fennáll, a Pi vagy a crontab nem fut.</div>`; }
