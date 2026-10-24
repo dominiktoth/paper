@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portfólió-riport</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+/* a weboldal (index.html) tokenjei (2026-10-24 új külső: Archivo, elszámolóházi papír / éjkék) + a grafikonok kategória-színei (dataviz referencia-paletta, az új felületeken is validálva 2026-10-24) */
+:root{
+  --bg:#E9EEF0; --surface:#F7F9FA; --surface-2:#EEF2F4; --ink:#12202B; --muted:#55687A; --line:#D3DCE2;
+  --win:#0A7258; --win-bg:#DAEFE8; --loss:#A5322A; --loss-bg:#F5E0DC; --accent:#3F55C6; --accent-bg:#E2E6F7; --shadow:none;
+  --grid:#E3E9ED; --axis:#B9C6CF;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6;
+  --c-pos:#2a78d6; --c-neg:#e34948; --c-mid:#eceeed; --c-band:#6250d6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1620; --surface:#16212C; --surface-2:#1C2935; --ink:#E3EAEF; --muted:#93A4B1; --line:#273746;
+    --win:#4FC7A0; --win-bg:#12302A; --loss:#F08378; --loss-bg:#3A1F1E; --accent:#6E7FE6; --accent-bg:#1E2747; --shadow:none;
+    --grid:#1E2C38; --axis:#3A5064;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9;
+    --c-pos:#3987e5; --c-neg:#e66767; --c-mid:#2a3134; --c-band:#9085e9;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1620; --surface:#16212C; --surface-2:#1C2935; --ink:#E3EAEF; --muted:#93A4B1; --line:#273746;
+  --win:#4FC7A0; --win-bg:#12302A; --loss:#F08378; --loss-bg:#3A1F1E; --accent:#6E7FE6; --accent-bg:#1E2747; --shadow:none;
+  --grid:#1E2C38; --axis:#3A5064;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9;
+  --c-pos:#3987e5; --c-neg:#e66767; --c-mid:#2a3134; --c-band:#9085e9;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 "Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+.mono,td.n,th.n{font-variant-numeric:tabular-nums}
+.wrap{max-width:1360px;margin:0 auto;padding:20px 16px 56px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:28px;font-weight:760;font-stretch:120%;margin:0;letter-spacing:-.015em}
+.sub{color:var(--muted);font-size:13px}
+.hdr-r{display:flex;align-items:center;gap:8px}
+button,.btn{font:inherit;font-size:13px;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+button:hover,.btn:hover{border-color:var(--muted)}
+button:focus-visible,input:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tab{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:210px;padding:10px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line);text-align:left}
+.tab[aria-selected="true"]{border-color:var(--accent);background:var(--accent-bg)}
+.tab .t{font-weight:600;font-size:14px}
+.tab .p{font-size:12px;color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;border-radius:0;padding:6px 11px;background:transparent}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent-bg);color:var(--ink);font-weight:600}
+.flabel{font-size:13px;color:var(--muted);margin-right:-6px}
+.cust{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.cust input{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border-radius:999px;padding:4px 10px 4px 8px;font-size:13px}
+.chip .sw{width:10px;height:10px;border-radius:50%;flex:none}
+.chip[aria-pressed="false"]{opacity:.45}
+.chip[aria-pressed="false"] .sw{background:transparent!important;box-shadow:inset 0 0 0 1.5px var(--muted)}
+.chip .r{color:var(--muted);font-size:12px}
+.desc{color:var(--muted);font-size:13px;margin:-4px 0 0;max-width:1100px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:10px;padding:11px 13px 10px;box-shadow:var(--shadow);min-width:0}
+.kpi.g{border-left-color:var(--win)} .kpi.b{border-left-color:var(--c-pos)} .kpi.r{border-left-color:var(--loss)} .kpi.a{border-left-color:var(--accent)}
+.kpi .l{display:block;color:var(--muted);font-size:12.5px}
+.kpi .v{display:block;font-size:22px;font-weight:600;margin:4px 0 2px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .s{display:block;color:var(--muted);font-size:12px}
+.sec{display:flex;align-items:baseline;gap:14px;margin:18px 0 -4px;font-size:19px;font-stretch:112%;font-weight:700;border-bottom:1px solid var(--line);padding-bottom:6px}
+.sec span{font-weight:400;letter-spacing:0;color:var(--muted);font-size:13px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.g3,.g2{align-items:start}
+.span2{grid-column:span 2} .full{grid-column:1/-1}
+@media (max-width:1100px){.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.g3,.g2{grid-template-columns:1fr}.span2{grid-column:auto}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px 10px;box-shadow:var(--shadow);min-width:0}
+.card h2{font-size:14px;margin:0;font-weight:600}
+.cap{color:var(--muted);font-size:12px;margin:1px 0 6px;min-height:18px}
+.ch{width:100%;height:280px}
+.ch.h360{height:380px} .ch.h230{height:230px} .ch.h320{height:320px}
+.empty{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;height:100%}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-size:12.5px;color:var(--muted);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:6px 8px;border-bottom:1px solid var(--line)}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.tw{overflow-x:auto}
+.mtab td,.mtab th{padding:4px 3px;text-align:center;font-size:11.5px}
+.mtab td.c{border-radius:4px;border:2px solid var(--surface);font-family:"Archivo",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.mtab td.y{font-weight:600;text-align:right;padding-left:8px}
+.mtab th.yr,.mtab td.yr{text-align:left;color:var(--muted)}
+.sumt td:first-child{color:var(--muted);white-space:normal}
+.sumt td{padding:5px 6px}
+.sumt td.n{font-weight:600}
+.sumt tr.gap td{border-top:6px solid transparent}
+.badge{display:inline-block;font-size:11px;padding:1px 6px;border-radius:999px;background:var(--accent-bg);color:var(--ink)}
+.sw-i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+.pos{color:var(--win)} .neg{color:var(--loss)}
+.note{font-size:12px;color:var(--muted)}
+.tl-bar{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:6px}
+footer{color:var(--muted);font-size:12px;margin-top:10px}
+#err{color:var(--loss);font-size:13px}
+.busy{opacity:.55;transition:opacity .15s}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+<header>
+  <div><h1>Portfólió-riport</h1><div class="sub" id="sub">betöltés…</div></div>
+  <div class="hdr-r"><a class="btn" href="index.html">Vissza a számlákhoz</a><button id="theme" type="button" aria-label="Téma váltása">Téma</button></div>
+</header>
+<div id="err"></div>
+<nav class="tabs" id="tabs" role="tablist" aria-label="Botok"></nav>
+<div class="filters">
+  <span class="flabel">portfólió</span><div class="seg" id="ports"></div>
+  <span class="flabel">időszak</span><div class="seg" id="ranges"></div>
+  <label class="cust">egyéni <input type="date" id="from" aria-label="kezdő nap"> – <input type="date" id="to" aria-label="utolsó nap"></label>
+</div>
+<div class="filters">
+  <span class="flabel">sleeve-ek</span><div class="chips" id="chips"></div>
+</div>
+<div class="filters">
+  <span class="flabel">Monte Carlo</span><div class="seg" id="mcmode"></div><div class="seg" id="mcn"></div>
+</div>
+<p class="desc" id="desc"></p>
+<section class="kpis" id="kpis" aria-label="Fő mutatók"></section>
+
+<h3 class="sec">Topstep-szemmel <span>napi P&amp;L, napi limit, konzisztencia, Combine-átmenés</span></h3>
+<section class="kpis" id="tkpis"></section>
+
+<h3 class="sec">Teljesítmény <span>a valódi trade-sorrend</span></h3>
+<div class="card"><h2>Tőkegörbe</h2><div class="cap">kumulált nettó P&amp;L költséggel, a kilépés idejében · long / short külön</div><div id="c_eq" class="ch h360"></div></div>
+<div class="card"><h2>Drawdown</h2><div class="cap" id="cap_dd"></div><div id="c_dd" class="ch h230"></div></div>
+
+<h3 class="sec">Monte Carlo <span id="mc_sub">mennyi lehetett szerencse</span></h3>
+<div class="g3">
+  <div class="card"><h2>Tőke-pályák</h2><div class="cap" id="cap_mcp"></div><div id="c_mcpaths" class="ch h320"></div></div>
+  <div class="card"><h2>Max drawdown eloszlása</h2><div class="cap" id="cap_mcdd"></div><div id="c_mcdd" class="ch h320"></div></div>
+  <div class="card"><h2>Összefoglaló</h2><div class="cap">ugyanez az él mit hozhatott volna</div><div class="tw"><table class="sumt" id="t_mc"></table></div></div>
+</div>
+<div class="g3">
+  <div class="card"><h2>Leghosszabb vesztes sorozat</h2><div class="cap" id="cap_mcs"></div><div id="c_mcstreak" class="ch"></div></div>
+  <div class="card"><h2>Végső nettó profit</h2><div class="cap" id="cap_mcf"></div><div id="c_mcfinal" class="ch"></div></div>
+  <div class="card"><h2>Keverés-teszt: a sorrend szerencséje</h2><div class="cap">ugyanazok a trade-ek véletlen sorrendben — a végösszeg azonos, csak a drawdown változik</div><div id="c_shuffle" class="ch"></div></div>
+</div>
+
+<h3 class="sec">Bontás <span>honnan jön a pénz</span></h3>
+<div class="g3">
+  <div class="card"><h2>Nettó P&amp;L évente</h2><div class="cap">felirat: nettó · trade · nyerési arány</div><div id="c_year" class="ch"></div></div>
+  <div class="card span2"><h2>Havi P&amp;L</h2><div class="cap" id="cap_mon"></div><div class="tw"><table class="mtab" id="t_mon"></table></div></div>
+  <div class="card"><h2>Trade-kimenetek</h2><div class="cap" id="cap_out"></div><div id="c_outcome" class="ch"></div></div>
+  <div class="card"><h2>Sleeve-enként</h2><div class="cap">nettó $ · trade · PF</div><div id="c_sleeve" class="ch"></div></div>
+  <div class="card"><h2>Long vs short</h2><div class="cap">nettó $ költséggel</div><div class="tw"><table id="t_ls"></table></div></div>
+  <div class="card"><h2>A hét napjai</h2><div class="cap">a kilépés sessionje szerint · nettó · trade · PF</div><div id="c_wday" class="ch"></div></div>
+  <div class="card"><h2>Belépés órája (ET)</h2><div class="cap">nettó $ · trade</div><div id="c_hour" class="ch"></div></div>
+  <div class="card"><h2>Kilépés oka szerint</h2><div class="cap">nettó $ · trade</div><div id="c_exit" class="ch"></div></div>
+  <div class="card"><h2>Gördülő 50 trade átlaga</h2><div class="cap">nettó $ / trade — stabil-e az él?</div><div id="c_roll50" class="ch"></div></div>
+  <div class="card"><h2>Kontraktusszám szerint</h2><div class="cap">nettó $ · trade · nyerési arány</div><div id="c_qty" class="ch"></div></div>
+  <div class="card"><h2>Idő a trade-ben</h2><div class="cap" id="cap_hold"></div><div id="c_hold" class="ch"></div></div>
+  <div class="card full"><h2>Gördülő 250 kereskedési nap</h2><div class="cap">az előző ~1 év nettója minden napon — mikor romlott az él?</div><div id="c_roll250" class="ch h230"></div></div>
+</div>
+
+<h3 class="sec">Portfólió <span>a sleeve-ek egymás mellett</span></h3>
+<div class="card"><h2>Sleeve-táblázat</h2><div class="cap">a kiválasztott időszakra · korreláció: a sleeve napi P&amp;L-je a többi sleeve együttes napi P&amp;L-jével</div><div class="tw"><table id="t_sl"></table></div></div>
+<div class="g2">
+  <div class="card"><h2>Sleeve-enkénti tőkegörbe</h2><div class="cap">a jelmagyarázatra kattintva ki-be kapcsolható</div><div id="c_sleq" class="ch h320"></div></div>
+  <div class="card"><h2>Korreláció (napi P&amp;L)</h2><div class="cap">kék = együtt mozog, piros = ellentétesen, szürke ≈ független</div><div id="c_corr" class="ch h320"></div></div>
+</div>
+
+<h3 class="sec">Topstep <span>50K Combine: +$3 000 cél, $2 000 követő MLL (a kezdőegyenlegen megáll), konzisztencia 50 %</span></h3>
+<div class="g3">
+  <div class="card"><h2>Napi P&amp;L eloszlása</h2><div class="cap" id="cap_daily"></div><div id="c_daily" class="ch"></div></div>
+  <div class="card"><h2>Combine minden napról indítva</h2><div class="cap" id="cap_comb"></div><div id="c_combine" class="ch"></div></div>
+  <div class="card"><h2>Profit-koncentráció</h2><div class="cap" id="cap_conc"></div><div id="c_conc" class="ch"></div></div>
+</div>
+
+<h3 class="sec">Trade-lista <span id="tl_sub"></span></h3>
+<div class="card">
+  <div class="tl-bar"><span class="note" id="tl_note"></span><span><button type="button" id="tl_more">mind</button> <button type="button" id="tl_csv">CSV letöltés</button></span></div>
+  <div class="tw"><table id="t_tl"></table></div>
+</div>
+<footer id="foot"></footer>
+</div>
+
+<script>
+'use strict';
+const DATA_URL='https://rfmmwzrgxxcaknufcfui.supabase.co/storage/v1/object/public/paper/data.json';
+const $=id=>document.getElementById(id);
+const SLOT={po:1,rsi:2,ftm:3,gold:4,cm:5,fomc:6,hy:7,cal:7,orb15:7};   // a szín a sleeve-et követi (nem a sorrendet); hy / cal / orb15 sosem fut együtt
+const S={rep:null,live:null,bi:0,pi:0,range:'all',from:null,to:null,off:new Set(),mcMode:'nap',mcN:2000,tlAll:false,charts:{},T:[],R:null};
+const nf0=new Intl.NumberFormat('hu-HU',{maximumFractionDigits:0});
+const usd=v=>v==null||!isFinite(v)?'–':(v<0?'−':'')+'$'+nf0.format(Math.abs(v));
+const usdS=v=>v==null||!isFinite(v)?'–':(v>0?'+':'')+usd(v);
+const kusd=v=>{if(v==null||!isFinite(v))return'–';const a=Math.abs(v),s=v<0?'−':'';return a>=1000?s+'$'+(a/1000).toLocaleString('hu-HU',{maximumFractionDigits:a>=10000?0:1})+'k':s+'$'+nf0.format(a);};
+const fx=(v,d=2)=>v==null||!isFinite(v)?'–':v.toLocaleString('hu-HU',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct=(v,d=0)=>v==null||!isFinite(v)?'–':(v*100).toLocaleString('hu-HU',{maximumFractionDigits:d,minimumFractionDigits:d})+' %';
+const cv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function el(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='style')e.style.cssText=v;else e.setAttribute(k,v);}for(const k of kids){if(k==null)continue;e.append(k instanceof Node?k:document.createTextNode(String(k)));}return e;}
+// ---------- idő: az adat ET falióra-idő 'YYYY-MM-DDTHH:MM' ----------
+const P=s=>[+s.slice(0,4),+s.slice(5,7),+s.slice(8,10),+s.slice(11,13),+s.slice(14,16)];
+const lms=s=>{const a=P(s);return new Date(a[0],a[1]-1,a[2],a[3],a[4]).getTime();};          // a grafikon a falióra-időt mutatja
+const sday=s=>{const a=P(s);return new Date(Date.UTC(a[0],a[1]-1,a[2],a[3]+6,a[4])).toISOString().slice(0,10);};   // session: 18:00 ET-től
+const mins=(a,b)=>{const x=P(a),y=P(b);return(Date.UTC(y[0],y[1]-1,y[2],y[3],y[4])-Date.UTC(x[0],x[1]-1,x[2],x[3],x[4]))/60000;};
+const dms=d=>Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10));
+const dlocal=d=>new Date(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10)).getTime();
+function bdays(a,b){const o=[];for(let t=dms(a);t<=dms(b);t+=864e5){const w=new Date(t).getUTCDay();if(w>0&&w<6)o.push(new Date(t).toISOString().slice(0,10));}return o;}
+// ---------- adat ----------
+function theme(){const t=localStorage.getItem('paper-theme');try{if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);else document.documentElement.removeAttribute('data-theme');}catch(e){}}
+async function load(){
+  theme();
+  const [rep,live]=await Promise.all([fetch('riport.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject(new Error('riport.json HTTP '+r.status))),
+    fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)]);
+  S.rep=rep;S.live=live;
+  const h=new URLSearchParams(location.hash.slice(1));const bi=rep.botok.findIndex(b=>b.id===h.get('bot'));if(bi>=0)S.bi=bi;
+  const pi=rep.botok[S.bi].portfoliok.findIndex(p=>p.id===h.get('p'));if(pi>=0)S.pi=pi;
+  if(['all','2022','2024','2025','2026','250','elo'].includes(h.get('r')))S.range=h.get('r');
+  $('sub').textContent=`adat: a bot saját kódjának visszajátszása (készült ${rep.keszult.replace('T',' ')} NY)`+(live?` · élő trade-ek: data.json (${String(live.keszult).slice(0,16).replace('T',' ')} NY)`:' · élő trade-ek: a data.json nem érhető el');
+  buildTabs();buildStatic();refresh();
+}
+function bot(){return S.rep.botok[S.bi];} function port(){return bot().portfoliok[S.pi];}
+function liveBot(){return(S.live&&S.live.botok||[]).find(b=>b.id===bot().id);}
+function trades(){
+  const b=bot(),p=port(),out=[],PV=S.rep.pv;
+  if(p.t){const t=p.t;for(let i=0;i<t.te.length;i++)out.push({te:t.te[i],tx:t.tx[i],s:t.s[i],d:t.d[i],q:t.q[i],R:t.R[i],u:t.u[i],i:t.i[i],x:t.x[i],rp:t.rp[i],src:'bt'});}
+  const L=liveBot();
+  if(p.elo&&L&&Array.isArray(L.trades)){
+    const lastTe=out.length?out.reduce((m,t)=>t.te>m?t.te:m,''):'';const risk=Object.fromEntries(p.sleeves.map(s=>[s.k,s.kock]));
+    for(const t of L.trades){
+      const isBf=/_bf$/.test(t.id||'')||/visszamen/.test(t.ok||'');if(p.t&&isBf)continue;
+      const te=String(t.t_entry).slice(0,16),tx=String(t.t_exit||t.t_entry).slice(0,16);if(p.t&&te<=lastTe)continue;
+      const s=(t.sleeve==='ftm'&&/EVAL/i.test(t.fazis||''))?'orb15':t.sleeve;const pv=PV[t.inst]||2;
+      const rp=(t.R&&t.pts)?Math.abs(t.pts/t.R):null;let q=t.qty,u=t.usd;
+      if(p.elo==='x1'){const base=risk[s];if(!base)continue;if(rp){q=Math.min(15,Math.max(1,Math.floor(base/(rp*pv))));u=t.pts*pv*q;}else{q=1;u=(t.R||0)*base;}}
+      out.push({te,tx,s,d:t.side,q,R:t.R,u,i:t.inst,x:String(t.ok||'').split(' ')[0],rp,src:isBf?'bt':'elo'});
+    }
+  }
+  out.sort((a,b)=>a.tx<b.tx?-1:a.tx>b.tx?1:0);
+  for(const t of out)t.dk=sday(t.tx);
+  return out;
+}
+function filtered(all){
+  const b=bot();let a=null,z=null;const r=S.range;
+  if(r==='2022')a='2022-01-01';else if(r==='2024')a='2024-01-01';else if(r==='2025'){a='2025-01-01';z='2025-12-31';}else if(r==='2026')a='2026-01-01';
+  else if(r==='elo')a=b.elo_kezdet;else if(r==='250'&&all.length){const d=bdays(all[0].dk,all[all.length-1].dk);a=d[Math.max(0,d.length-250)];}
+  else if(r==='custom'){a=S.from;z=S.to;}
+  return all.filter(t=>!S.off.has(t.s)&&(!a||t.dk>=a)&&(!z||t.dk<=z));
+}
+// ---------- számítás ----------
+const pctl=(sorted,p)=>sorted.length?sorted[Math.min(sorted.length-1,Math.max(0,Math.floor(p*(sorted.length-1))))]:NaN;
+function grp(T,key){const m=new Map();for(const t of T){const k=key(t);let g=m.get(k);if(!g){g={k,n:0,net:0,gw:0,gl:0,w:0};m.set(k,g);}g.n++;g.net+=t.u;if(t.u>0){g.gw+=t.u;g.w++;}else g.gl-=t.u;}for(const g of m.values()){g.pf=g.gl>0?g.gw/g.gl:Infinity;g.wr=g.w/g.n;}return m;}
+function calc(T){
+  const R={n:T.length};if(!T.length)return R;const PV=S.rep.pv,CP=S.rep.koltseg_pt;
+  let net=0,gw=0,gl=0,w=0,l=0,big=-Infinity,small=Infinity,cost=0,eq=0,pk=0,mdd=0,mddAt=null,ls=0,lsM=0,ws=0,wsM=0,eL=0,eS=0,sumW=0,sumL=0,uw=0,uwM=0;
+  const eqA=[],ddA=[],eqL=[],eqS=[],us=[],holdW=[],holdL=[],roll=[];let rs=0;
+  for(let i=0;i<T.length;i++){const t=T[i],u=t.u,x=lms(t.tx);net+=u;us.push(u);cost+=(CP[t.i]||0)*(PV[t.i]||0)*(t.q||1);
+    if(u>0){gw+=u;w++;sumW+=u;ws++;ls=0;}else{gl-=u;l++;sumL+=u;ls++;ws=0;}if(ws>wsM)wsM=ws;if(ls>lsM)lsM=ls;if(u>big)big=u;if(u<small)small=u;
+    eq+=u;if(eq>pk){pk=eq;uw=0;}else uw++;if(uw>uwM)uwM=uw;const dd=eq-pk;if(-dd>mdd){mdd=-dd;mddAt=t.dk;}eqA.push([x,eq]);ddA.push([x,dd]);
+    if(t.d>0){eL+=u;eqL.push([x,eL]);}else{eS+=u;eqS.push([x,eS]);}
+    const h=mins(t.te,t.tx);(u>0?holdW:holdL).push(h);
+    rs+=u;if(i>=50)rs-=T[i-50].u;if(i>=49)roll.push([x,rs/50]);}
+  const so=[...us].sort((a,b)=>a-b);
+  // napi
+  const dm=new Map();for(const t of T){let g=dm.get(t.dk);if(!g){g={u:0,n:0,run:0,lo:0};dm.set(t.dk,g);}g.n++;g.u+=t.u;g.run+=t.u;if(g.run<g.lo)g.lo=g.run;}
+  const days=[...dm.keys()].sort();const cal=bdays(days[0],days[days.length-1]);const dv=cal.map(d=>dm.has(d)?dm.get(d).u:0);
+  const mean=dv.reduce((a,b)=>a+b,0)/dv.length,sd=Math.sqrt(dv.reduce((a,b)=>a+(b-mean)**2,0)/Math.max(1,dv.length-1)),dsd=Math.sqrt(dv.reduce((a,b)=>a+Math.min(0,b)**2,0)/dv.length);
+  const tdv=days.map(d=>dm.get(d).u);const pos=tdv.filter(v=>v>0);const sortedD=[...tdv].sort((a,b)=>b-a);
+  const top10=sortedD.slice(0,10).reduce((a,b)=>a+b,0);const yrs=cal.length/252;
+  Object.assign(R,{net,gw,gl,pf:gl>0?gw/gl:Infinity,w,l,wr:w/T.length,avg:net/T.length,med:pctl(so,.5),avgW:w?sumW/w:0,avgL:l?sumL/l:0,mdd,mddAt,rec:mdd>0?net/mdd:Infinity,
+    sharpe:sd>0?mean/sd*Math.sqrt(252):NaN,sortino:dsd>0?mean/dsd*Math.sqrt(252):NaN,perYr:net/yrs,tPerYr:T.length/yrs,big,small,lsM,wsM,uwM,cost,
+    holdMed:pctl([...holdW,...holdL].sort((a,b)=>a-b),.5),holdW,holdL,eqA,ddA,eqL,eqS,roll,us,dm,days,cal,dv,tdv,
+    worstDay:Math.min(...tdv),bestDay:Math.max(...tdv),dll:tdv.filter(v=>v<=-1000).length,posDays:pos.length/tdv.length,top10:net>0?top10/net:NaN,bestShare:net>0?Math.max(...tdv)/net:NaN,
+    first:days[0],last:days[days.length-1],nL:T.filter(t=>t.d>0).length,nS:T.filter(t=>t.d<0).length});
+  R.combine=combineRoll(cal,dm);
+  return R;
+}
+// Combine minden kereskedési napról indítva (valódi sorrend): EOD-követő MLL $2 000 (legfeljebb a kezdőegyenlegig), napon belüli mélypont a lezárt trade-ekből, cél +$3 000, a legjobb nap ≤ 50 %
+function combineRoll(cal,dm){
+  const n=cal.length,du=new Float64Array(n),lo=new Float64Array(n);for(let i=0;i<n;i++){const g=dm.get(cal[i]);if(g){du[i]=g.u;lo[i]=g.lo;}}
+  const pass=[],bust=[];let open=0;
+  for(let s=0;s<n;s++){let bal=0,pk=0,best=0,r=0;for(let j=s;j<n;j++){const fl=Math.min(pk-2000,0);if(bal+lo[j]<=fl){r=-(j-s+1);break;}bal+=du[j];if(du[j]>best)best=du[j];if(bal>pk)pk=bal;if(bal<=Math.min(pk-2000,0)){r=-(j-s+1);break;}if(bal>=3000&&best<=0.5*bal){r=j-s+1;break;}}
+    if(r>0)pass.push(r);else if(r<0)bust.push(-r);else open++;}
+  const ps=[...pass].sort((a,b)=>a-b);const fin=pass.length+bust.length;
+  return{pass,bust,open,pPass:fin?pass.length/fin:NaN,pBust:fin?bust.length/fin:NaN,medPass:pctl(ps,.5),n};
+}
+function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function runMC(v,N){
+  const n=v.length,K=Math.min(n,150),cp=new Int32Array(K);for(let k=0;k<K;k++)cp[k]=Math.max(0,Math.round((k+1)*n/K)-1);
+  const col=Array.from({length:K},()=>new Float64Array(N));const fin=new Float64Array(N),dd=new Float64Array(N),st=new Float64Array(N);let hit=0,pass=0,bust=0,neg=0;const paths=[];const r=rng(1);
+  for(let j=0;j<N;j++){let e=0,p=0,m=0,s=0,sm=0,k=0,done=0;const keep=j<40,path=keep?new Array(K):null;
+    for(let i=0;i<n;i++){const x=v[(r()*n)|0];e+=x;if(e>p)p=e;if(p-e>m)m=p-e;if(x<0){s++;if(s>sm)sm=s;}else s=0;
+      if(!done){if(e<=Math.min(p-2000,0))done=-1;else if(e>=3000)done=1;}
+      if(i===cp[k]){col[k][j]=e;if(keep)path[k]=e;k++;}}
+    fin[j]=e;dd[j]=m;st[j]=sm;if(m>=2000)hit++;if(done===1)pass++;else if(done===-1)bust++;if(e<0)neg++;if(keep)paths.push(path);}
+  const band={p5:[],p25:[],p50:[],p75:[],p95:[]};for(let k=0;k<K;k++){const c=col[k].sort();band.p5.push(pctl(c,.05));band.p25.push(pctl(c,.25));band.p50.push(pctl(c,.5));band.p75.push(pctl(c,.75));band.p95.push(pctl(c,.95));}
+  const sh=new Float64Array(Math.min(N,2000)),a=Float64Array.from(v),r2=rng(7);
+  for(let j=0;j<sh.length;j++){for(let i=n-1;i>0;i--){const q=(r2()*(i+1))|0,t=a[i];a[i]=a[q];a[q]=t;}let e=0,p=0,m=0;for(let i=0;i<n;i++){e+=a[i];if(e>p)p=e;if(p-e>m)m=p-e;}sh[j]=m;}
+  return{N,n,K,cp,band,paths,fin:fin.sort(),dd:dd.sort(),st:st.sort(),sh:sh.sort(),pHit:hit/N,pPass:pass/N,pBust:bust/N,pNeg:neg/N};
+}
+// ---------- grafikon-alapok ----------
+function TH(){return{ink:cv('--ink'),muted:cv('--muted'),line:cv('--line'),grid:cv('--grid'),axis:cv('--axis'),surface:cv('--surface'),pos:cv('--c-pos'),neg:cv('--c-neg'),mid:cv('--c-mid'),band:cv('--c-band'),accent:cv('--accent'),
+  s:[1,2,3,4,5,6,7].map(i=>cv('--s'+i))};}
+const scol=(t,k)=>t.s[(SLOT[k]||1)-1];
+function chart(id){let c=S.charts[id];const d=$(id);if(!c){c=echarts.init(d,null,{renderer:'canvas'});S.charts[id]=c;}return c;}
+function empty(id,msg){const c=S.charts[id];if(c){c.dispose();delete S.charts[id];}$(id).replaceChildren(el('div',{class:'empty'},msg));}
+function base(t,extra){return Object.assign({animation:false,textStyle:{fontFamily:'Archivo, system-ui, sans-serif',color:t.muted,fontSize:11},
+  grid:{left:6,right:18,top:26,bottom:6,containLabel:true},
+  tooltip:{backgroundColor:t.surface,borderColor:t.line,borderWidth:1,padding:[7,10],textStyle:{color:t.ink,fontSize:12,fontFamily:'Archivo, system-ui, sans-serif'},extraCssText:'box-shadow:none;border-radius:8px;'}},extra||{});}
+function ax(t,o){return Object.assign({axisLine:{lineStyle:{color:t.axis}},axisTick:{show:false},axisLabel:{color:t.muted,fontSize:11},splitLine:{lineStyle:{color:t.grid,width:1}}},o||{});}
+function tax(t){return ax(t,{type:'time',splitLine:{show:false},axisLabel:{color:t.muted,fontSize:11,hideOverlap:true,formatter:v=>{const d=new Date(v),m=d.getMonth(),dd=d.getDate();
+  if(S.span>500)return m===0&&dd<=7?String(d.getFullYear()):'';if(S.span>70)return dd<=7?(m===0?d.getFullYear()+'. ':'')+['jan','feb','márc','ápr','máj','jún','júl','aug','szept','okt','nov','dec'][m]:'';return`${String(m+1).padStart(2,'0')}.${String(dd).padStart(2,'0')}.`;}}});}
+const yUsd=t=>ax(t,{type:'value',axisLabel:{color:t.muted,fontSize:11,hideOverlap:true,formatter:v=>kusd(v)},splitLine:{lineStyle:{color:t.grid}}});
+function mline(t,data,color){return{symbol:'none',silent:true,animation:false,lineStyle:{color:color||t.muted,type:'dashed',width:1},label:{color:t.muted,fontSize:10.5,position:'insideEndTop'},data};}
+const row=(c,name,val)=>`<div style="display:flex;justify-content:space-between;gap:14px;align-items:center"><span style="display:flex;align-items:center;gap:6px;color:${cv('--muted')}"><span style="width:12px;height:2px;background:${c};display:inline-block"></span>${name}</span><b style="font-weight:600">${val}</b></div>`;
+function barsPN(t,cats,vals,labels,opt){   // egy mérőszám, előjel szerinti szín (kék + / piros −), 4 px lekerekített adat-vég, ≤ 24 px
+  return Object.assign(base(t),{tooltip:Object.assign(base(t).tooltip,{trigger:'item',formatter:p=>`<b>${p.name}</b><br>${labels?labels[p.dataIndex].replace(/\n/g,'<br>'):usdS(p.value)}`}),
+    xAxis:ax(t,{type:'category',data:cats,axisLabel:{color:t.muted,fontSize:11}}),yAxis:yUsd(t),
+    series:[{type:'bar',barMaxWidth:24,data:vals.map(v=>({value:v,itemStyle:{color:v>=0?t.pos:t.neg,borderRadius:v>=0?[4,4,0,0]:[0,0,4,4]}})),
+      label:{show:!!labels&&cats.length<=12,position:'top',color:t.muted,fontSize:10,formatter:p=>labels?labels[p.dataIndex].split('\n')[0]:''}}]},opt||{});}
+function hist(vals,nb,lo,hi){if(!vals.length)return{c:[],e:[]};lo=lo??vals[0];hi=hi??vals[vals.length-1];if(hi<=lo)hi=lo+1;const w=(hi-lo)/nb,c=new Array(nb).fill(0);for(const v of vals){if(v<lo||v>hi)continue;c[Math.min(nb-1,Math.floor((v-lo)/w))]++;}return{c,e:c.map((_,i)=>lo+w*(i+.5)),w};}
+function histChart(t,id,vals,color,marks,xfmt,xname){
+  const h=hist(vals,40);const c=chart(id);
+  c.setOption(Object.assign(base(t),{grid:{left:6,right:18,top:26,bottom:26,containLabel:true},tooltip:Object.assign(base(t).tooltip,{trigger:'item',formatter:p=>`${xfmt(h.e[p.dataIndex]-h.w/2)} … ${xfmt(h.e[p.dataIndex]+h.w/2)}<br><b>${nf0.format(p.value)}</b> futás`}),
+    xAxis:ax(t,{type:'value',min:h.e[0]-h.w/2,max:h.e[h.e.length-1]+h.w/2,axisLabel:{color:t.muted,fontSize:11,formatter:xfmt},name:xname,nameLocation:'middle',nameGap:24,nameTextStyle:{color:t.muted,fontSize:11},splitLine:{show:false}}),
+    yAxis:ax(t,{type:'value'}),
+    series:[{type:'bar',barWidth:'92%',data:h.c.map((v,i)=>[h.e[i],v]),itemStyle:{color,borderRadius:[2,2,0,0]},markLine:mline(t,marks.map(m=>({xAxis:m.v,label:{formatter:m.l,color:t.ink},lineStyle:{color:m.c||t.ink,type:m.solid?'solid':'dashed',width:m.solid?2:1}})))}]}),true);
+}
+// ---------- UI ----------
+function buildTabs(){
+  $('tabs').replaceChildren(...S.rep.botok.map((b,i)=>{const L=(S.live&&S.live.botok||[]).find(x=>x.id===b.id);const on=L&&L.allapot&&L.allapot.fut;
+    const btn=el('button',{class:'tab',role:'tab','aria-selected':String(i===S.bi),type:'button'},el('span',{class:'t'},b.nev),el('span',{class:'p'},`${b.acct} · ${b.portfoliok.length} nézet`+(on===true?' · fut':on===false?' · áll':'')));
+    btn.onclick=()=>{S.bi=i;S.pi=0;S.off.clear();buildTabs();buildStatic();refresh();};return btn;}));
+}
+function seg(id,items,cur,on){$(id).replaceChildren(...items.map(([v,l])=>{const b=el('button',{type:'button','aria-pressed':String(v===cur)},l);b.onclick=()=>on(v);return b;}));}
+function buildStatic(){
+  const b=bot();
+  seg('ports',b.portfoliok.map((p,i)=>[i,p.nev]),S.pi,v=>{S.pi=v;S.off.clear();buildStatic();refresh();});
+  seg('ranges',[['all','teljes'],['2022','2022-től'],['2024','2024-től'],['2025','2025'],['2026','2026'],['250','utolsó 250 nap'],['elo','élő óta']],S.range,v=>{S.range=v;buildStatic();refresh();});
+  seg('mcmode',[['nap','napokból'],['trade','trade-ekből']],S.mcMode,v=>{S.mcMode=v;buildStatic();refresh(true);});
+  seg('mcn',[[1000,'1 000 futás'],[2000,'2 000'],[5000,'5 000']],S.mcN,v=>{S.mcN=v;buildStatic();refresh(true);});
+  const p=port(),t=TH();
+  $('chips').replaceChildren(...p.sleeves.map(s=>{const on=!S.off.has(s.k);const c=el('button',{class:'chip',type:'button','aria-pressed':String(on),title:on?'kizárás a portfólióból':'visszavétel'},el('span',{class:'sw',style:`background:${scol(t,s.k)}`}),s.nev,el('span',{class:'r'},'$'+nf0.format(s.kock)));
+    c.onclick=()=>{if(S.off.has(s.k))S.off.delete(s.k);else S.off.add(s.k);buildStatic();refresh();};return c;}));
+  $('desc').textContent=p.leiras;
+  history.replaceState(null,'','#bot='+b.id+'&p='+p.id+(S.range!=='all'&&S.range!=='custom'?'&r='+S.range:''));
+}
+$('from').onchange=$('to').onchange=()=>{S.from=$('from').value||null;S.to=$('to').value||null;S.range='custom';buildStatic();refresh();};
+$('theme').onclick=()=>{const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');const nx=cur==='dark'?'light':'dark';try{localStorage.setItem('paper-theme',nx);}catch(e){}theme();buildStatic();refresh(false,true);};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{buildStatic();refresh(false,true);});
+$('tl_more').onclick=()=>{S.tlAll=!S.tlAll;renderList();};
+$('tl_csv').onclick=()=>{const h='belepes_et,kilepes_et,session,sleeve,irany,db,instr,R,usd,kilepes_oka,forras';const L=S.T.map(t=>[t.te,t.tx,t.dk,t.s,t.d>0?'long':'short',t.q,t.i,t.R,(+t.u).toFixed(2),t.x,t.src].join(','));
+  const a=el('a',{href:URL.createObjectURL(new Blob([h+'\n'+L.join('\n')],{type:'text/csv'})),download:`riport_${bot().id}_${port().id}.csv`});document.body.append(a);a.click();a.remove();};
+let rT=null;addEventListener('resize',()=>{clearTimeout(rT);rT=setTimeout(()=>Object.values(S.charts).forEach(c=>c.resize()),120);});
+// ---------- kirajzolás ----------
+let MC=null,mcKey='';
+function refresh(mcOnly,themeOnly){
+  $('wrap').classList.add('busy');
+  setTimeout(()=>{try{
+    if(!themeOnly){S.all=trades();S.T=filtered(S.all);S.R=calc(S.T);S.span=S.R.n?(dms(S.R.last)-dms(S.R.first))/864e5:0;}
+    const R=S.R,t=TH();
+    const key=[S.bi,S.pi,S.range,S.from,S.to,[...S.off].join(','),S.mcMode,S.mcN].join('|');
+    if(R.n&&(key!==mcKey||!MC)){MC=runMC(S.mcMode==='nap'?R.tdv:R.us,S.mcN);mcKey=key;}
+    if(!mcOnly||themeOnly){kpis(R);perf(R,t);breakdown(R,t);portfolio(R,t);topstep(R,t);renderList();}
+    montecarlo(R,t);
+    if(themeOnly)Object.values(S.charts).forEach(c=>c.resize());
+  }catch(e){$('err').textContent='Hiba: '+e.message;console.error(e);}
+  $('wrap').classList.remove('busy');},10);
+}
+function tile(l,v,s,cls){return el('div',{class:'kpi '+(cls||'')},el('span',{class:'l'},l),el('span',{class:'v'},v),el('span',{class:'s'},s||' '));}
+function kpis(R){
+  if(!R.n){$('kpis').replaceChildren(tile('nincs trade','–','ebben a nézetben / időszakban')); $('tkpis').replaceChildren();return;}
+  $('kpis').replaceChildren(
+    tile('Nettó profit',usd(R.net),`bruttó nyerő ${usd(R.gw)} · ${R.first} → ${R.last}`,R.net>=0?'g':'r'),
+    tile('Profit factor',fx(R.pf),'bruttó nyerő / bruttó vesztő',R.pf>=1?'g':'r'),
+    tile('Nyerési arány',pct(R.wr,1),`${nf0.format(R.w)} nyerő · ${nf0.format(R.l)} vesztő`,'b'),
+    tile('Átlagos trade',usd(R.avg),`medián ${usd(R.med)} · ${nf0.format(R.n)} trade`,R.avg>=0?'g':'r'),
+    tile('Átl. nyerő / vesztő',`${usd(R.avgW)} / ${usd(R.avgL)}`,`arány ${fx(R.avgL?R.avgW/-R.avgL:NaN)}`,'b'),
+    tile('Max drawdown',usd(-R.mdd),`a mélypont: ${R.mddAt||'–'} · lezárt trade-ekből`,'r'),
+    tile('Recovery factor',fx(R.rec),'nettó profit / max DD','g'),
+    tile('Sharpe · Sortino',`${fx(R.sharpe)} · ${fx(R.sortino)}`,'napi, évesítve (√252)','b'),
+    tile('Évente',usd(R.perYr),`${fx(R.tPerYr,0)} trade / év`,R.perYr>=0?'g':'r'),
+    tile('Legnagyobb nyerő / vesztő',`${usd(R.big)} / ${usd(R.small)}`,'egy trade','b'),
+    tile('Vesztes sorozat',nf0.format(R.lsM),`leghosszabb nyerő sorozat ${R.wsM} · víz alatt ${nf0.format(R.uwM)} trade`,'a'),
+    tile('Költség',usd(R.cost),`benne a nettóban · tartás mediánja ${fx(R.holdMed,0)} perc`,''));
+  const C=R.combine;
+  $('tkpis').replaceChildren(
+    tile('Legrosszabb nap',usd(R.worstDay),`legjobb nap ${usd(R.bestDay)}`,'r'),
+    tile('Napok ≤ −$1 000',nf0.format(R.dll),`${nf0.format(R.days.length)} kereskedési napból (napi limit)`,R.dll?'r':'g'),
+    tile('Legjobb nap a profitból',pct(R.bestShare,1),'Combine-konzisztencia: ≤ 50 %',R.bestShare<=.5?'g':'r'),
+    tile('Top-10 nap részesedése',pct(R.top10,0),'koncentráció-kapu: ≤ 30 %',R.top10<=.3?'g':'r'),
+    tile('Pozitív napok',pct(R.posDays,0),`átlag ${usd(R.net/R.days.length)} / kereskedési nap`,'b'),
+    tile('Combine-átmenés',pct(C.pPass,0),`gördülő kezdés · medián ${isFinite(C.medPass)?C.medPass+' nap':'–'} · bukás ${pct(C.pBust,0)}`,C.pPass>=.5?'g':'a'));
+}
+function perf(R,t){
+  if(!R.n){['c_eq','c_dd'].forEach(i=>empty(i,'nincs trade ebben a nézetben / időszakban'));$('cap_dd').textContent='';return;}
+  const b=bot(),eloMs=dlocal(b.elo_kezdet),inR=R.eqA.length&&eloMs>=R.eqA[0][0]&&eloMs<=R.eqA[R.eqA.length-1][0];
+  const fmtT=p=>{const d=new Date(p[0].value[0]);return d.toLocaleDateString('hu-HU')+'<br>'+p.map(x=>row(x.color,x.seriesName,usd(x.value[1]))).join('');};
+  chart('c_eq').setOption(Object.assign(base(t),{legend:{top:0,left:0,icon:'rect',itemWidth:12,itemHeight:2,textStyle:{color:t.muted,fontSize:11},data:['összes','long','short']},
+    tooltip:Object.assign(base(t).tooltip,{trigger:'axis',axisPointer:{type:'line',lineStyle:{color:t.axis}},formatter:fmtT}),
+    xAxis:tax(t),yAxis:yUsd(t),grid:{left:6,right:70,top:30,bottom:6,containLabel:true},
+    series:[{name:'long',type:'line',showSymbol:false,sampling:'lttb',data:R.eqL,lineStyle:{width:1.5,color:t.s[2]},itemStyle:{color:t.s[2]}},
+      {name:'short',type:'line',showSymbol:false,sampling:'lttb',data:R.eqS,lineStyle:{width:1.5,color:t.s[1]},itemStyle:{color:t.s[1]}},
+      {name:'összes',type:'line',showSymbol:false,sampling:'lttb',data:R.eqA,lineStyle:{width:2,color:t.pos},itemStyle:{color:t.pos},areaStyle:{color:t.pos,opacity:.1},
+        endLabel:{show:true,formatter:p=>usd(p.value[1]),color:t.ink,fontWeight:600,fontSize:12},
+        markLine:inR?mline(t,[{xAxis:eloMs,label:{formatter:'élő indulás',color:t.ink}}],t.accent):undefined}]}),true);
+  const mcMed=MC?-pctl(MC.dd,.5):null,mc95=MC?-pctl(MC.dd,.95):null;
+  $('cap_dd').textContent=`$ a futó csúcs alatt · max ${usd(-R.mdd)} (${R.mddAt}) · leghosszabb víz alatt ${nf0.format(R.uwM)} trade · szaggatott: Topstep MLL és a Monte Carlo medián / 95 %-os max DD`;
+  const lines=[{yAxis:-2000,label:{formatter:'MLL −$2 000'}}];if(MC){lines.push({yAxis:mcMed,label:{formatter:'MC medián '+usd(mcMed)}});lines.push({yAxis:mc95,label:{formatter:'MC 95 % '+usd(mc95)}});}
+  chart('c_dd').setOption(Object.assign(base(t),{tooltip:Object.assign(base(t).tooltip,{trigger:'axis',axisPointer:{type:'line',lineStyle:{color:t.axis}},formatter:p=>new Date(p[0].value[0]).toLocaleDateString('hu-HU')+'<br>'+row(t.neg,'drawdown',usd(p[0].value[1]))}),
+    xAxis:tax(t),yAxis:Object.assign(yUsd(t),{min:v=>Math.floor(Math.min(v.min,mc95??v.min,-2100)/1000)*1000}),
+    series:[{name:'drawdown',type:'line',showSymbol:false,sampling:'lttb',data:R.ddA,lineStyle:{width:1.2,color:t.neg},itemStyle:{color:t.neg},areaStyle:{color:t.neg,opacity:.12},markLine:mline(t,lines)}]}),true);
+}
+function montecarlo(R,t){
+  if(!R.n||!MC){['c_mcpaths','c_mcdd','c_mcstreak','c_mcfinal','c_shuffle'].forEach(i=>empty(i,'nincs trade'));$('t_mc').replaceChildren();return;}
+  const unit=S.mcMode==='nap'?'kereskedési nap':'trade';$('mc_sub').textContent=`${nf0.format(MC.N)} futás, mindegyik ${nf0.format(MC.n)} ${unit} visszatevéses húzással a saját ${S.mcMode==='nap'?'napi P&L-ekből':'trade-ekből'} · mennyi lehetett szerencse`;
+  const xs=Array.from(MC.cp,i=>i+1);const act=S.mcMode==='nap'?(()=>{let e=0;const c=R.tdv.map(v=>e+=v);return Array.from(MC.cp,i=>c[i]);})():Array.from(MC.cp,i=>R.eqA[i][1]);
+  const B=MC.band,diff=(a,b)=>a.map((v,i)=>v-b[i]);
+  $('cap_mcp').textContent=`halvány vonalak: 40 véletlen pálya · a valódi pálya a sávokhoz mérve`;
+  const ser=[...MC.paths.map(p=>({type:'line',data:p,showSymbol:false,silent:true,lineStyle:{width:1,color:t.band,opacity:.16},z:1,tooltip:{show:false}})),
+    {name:'5 %',type:'line',data:B.p5,stack:'o',showSymbol:false,lineStyle:{opacity:0},z:2},{name:'5–95 %',type:'line',data:diff(B.p95,B.p5),stack:'o',showSymbol:false,lineStyle:{opacity:0},itemStyle:{color:t.band,opacity:.45},areaStyle:{color:t.band,opacity:.14},z:2},
+    {name:'25 %',type:'line',data:B.p25,stack:'i',showSymbol:false,lineStyle:{opacity:0},z:3},{name:'25–75 %',type:'line',data:diff(B.p75,B.p25),stack:'i',showSymbol:false,lineStyle:{opacity:0},itemStyle:{color:t.band,opacity:.8},areaStyle:{color:t.band,opacity:.22},z:3},
+    {name:'medián',type:'line',data:B.p50,showSymbol:false,lineStyle:{width:1.5,type:'dashed',color:t.ink},itemStyle:{color:t.ink},z:4},
+    {name:'valódi',type:'line',data:act,showSymbol:false,lineStyle:{width:2,color:t.pos},itemStyle:{color:t.pos},z:5,endLabel:{show:true,formatter:p=>kusd(p.value),color:t.ink,fontSize:10.5,fontWeight:600}}];
+  chart('c_mcpaths').setOption(Object.assign(base(t),{grid:{left:6,right:50,top:30,bottom:26,containLabel:true},
+    legend:{top:0,left:0,itemWidth:12,itemHeight:6,textStyle:{color:t.muted,fontSize:11},data:[{name:'valódi',icon:'rect'},{name:'medián',icon:'rect'},{name:'5–95 %',icon:'rect'},{name:'25–75 %',icon:'rect'}]},
+    tooltip:Object.assign(base(t).tooltip,{trigger:'axis',formatter:p=>{const i=p[0].dataIndex;return`${unit} #${nf0.format(xs[i])}<br>`+row(t.pos,'valódi',usd(act[i]))+row(t.ink,'medián',usd(B.p50[i]))+row(t.band,'95 %',usd(B.p95[i]))+row(t.band,'5 %',usd(B.p5[i]));}}),
+    xAxis:ax(t,{type:'category',data:xs,boundaryGap:false,axisLabel:{color:t.muted,fontSize:11,interval:Math.floor(xs.length/5)},name:unit+' #',nameLocation:'middle',nameGap:22,nameTextStyle:{color:t.muted,fontSize:11},splitLine:{show:false}}),
+    yAxis:yUsd(t),series:ser}),true);
+  const aDD=S.mcMode==='nap'?dayMdd(R):R.mdd,ddv=Array.from(MC.dd);const bigger=ddv.filter(v=>v<aDD).length/ddv.length;
+  $('cap_mcdd').textContent=`a valódi max DD (${S.mcMode==='nap'?'napi zárókból':'trade-ekből'}) ${usd(-aDD)} rosszabb a futások ${pct(bigger,0)}-ánál`;
+  histChart(t,'c_mcdd',ddv.map(v=>-v).sort((a,b)=>a-b),t.neg,[{v:-aDD,l:'valódi',c:t.pos,solid:true},{v:-pctl(MC.dd,.5),l:'medián'},{v:-pctl(MC.dd,.95),l:'95 %'},{v:-2000,l:'MLL',c:t.accent}],kusd,'max drawdown');
+  $('cap_mcs').textContent=`egymást követő vesztes ${unit} · valódi ${S.mcMode==='nap'?longestLosingDays(R):R.lsM} · 95 %: ${pctl(MC.st,.95)}`;
+  const sv=Array.from(MC.st);const smax=Math.max(...sv),cnt=new Array(smax+1).fill(0);sv.forEach(v=>cnt[v]++);const cats=cnt.map((_,i)=>i);const lo=Math.max(0,sv[0]-1);
+  chart('c_mcstreak').setOption(Object.assign(base(t),{grid:{left:6,right:18,top:26,bottom:26,containLabel:true},tooltip:Object.assign(base(t).tooltip,{trigger:'item',formatter:p=>`${p.name} egymás után<br><b>${nf0.format(p.value)}</b> futás`}),
+    xAxis:ax(t,{type:'category',data:cats.slice(lo),name:`vesztes ${unit} egymás után`,nameLocation:'middle',nameGap:24,nameTextStyle:{color:t.muted,fontSize:11}}),yAxis:ax(t,{type:'value'}),
+    series:[{type:'bar',barMaxWidth:24,data:cnt.slice(lo),itemStyle:{color:t.neg,borderRadius:[4,4,0,0]},markLine:mline(t,[{xAxis:String(S.mcMode==='nap'?longestLosingDays(R):R.lsM),label:{formatter:'valódi',color:t.ink},lineStyle:{color:t.pos,type:'solid',width:2}},{xAxis:String(pctl(MC.st,.95)),label:{formatter:'95 %'}}])}]}),true);
+  $('cap_mcf').textContent=`a futások ${pct(1-MC.pNeg,1)}-a pozitív · 5 %: ${usd(pctl(MC.fin,.05))} · 1 %: ${usd(pctl(MC.fin,.01))}`;
+  histChart(t,'c_mcfinal',Array.from(MC.fin),t.band,[{v:R.net,l:'valódi',c:t.pos,solid:true},{v:pctl(MC.fin,.05),l:'5 %'},{v:0,l:'0',c:t.axis}],kusd,'végső nettó');
+  histChart(t,'c_shuffle',Array.from(MC.sh).map(v=>-v).sort((a,b)=>a-b),t.s[1],[{v:-(S.mcMode==='nap'?dayMdd(R):R.mdd),l:'valódi',c:t.pos,solid:true},{v:-pctl(MC.sh,.95),l:'95 %'}],kusd,'max drawdown (keverve)');
+  const T=$('t_mc'),r=(a,b,cls)=>el('tr',cls?{class:cls}:null,el('td',null,a),el('td',{class:'n'},b));
+  T.replaceChildren(r('nettó profit, medián',usd(pctl(MC.fin,.5))),r('nettó profit, 5. percentilis',usd(pctl(MC.fin,.05))),r('nettó profit, 1. percentilis',usd(pctl(MC.fin,.01))),r('veszteséggel zár',pct(MC.pNeg,1)),
+    r('max drawdown, medián',usd(-pctl(MC.dd,.5)),'gap'),r('max drawdown, 90. percentilis',usd(-pctl(MC.dd,.9))),r('max drawdown, 95. percentilis',usd(-pctl(MC.dd,.95))),r('max drawdown, 99. percentilis',usd(-pctl(MC.dd,.99))),
+    r(`valódi max drawdown (${S.mcMode==='nap'?'napi zárókból':'trade-ekből'}; rosszabb a futások ${pct(bigger,0)}-ánál)`,usd(-(S.mcMode==='nap'?dayMdd(R):R.mdd))),
+    r(`vesztes sorozat, 95. percentilis`,`${pctl(MC.st,.95)} ${unit}`,'gap'),r('DD valaha ≥ $2 000',pct(MC.pHit,1),'gap'),r('+$3 000 előbb, mint a −$2 000 MLL',pct(MC.pPass,1)),r('MLL előbb, mint +$3 000',pct(MC.pBust,1)));
+}
+function dayMdd(R){let e=0,p=0,m=0;for(const v of R.tdv){e+=v;if(e>p)p=e;if(p-e>m)m=p-e;}return m;}
+function longestLosingDays(R){let s=0,m=0;for(const v of R.tdv){if(v<0){s++;if(s>m)m=s;}else s=0;}return m;}
+function breakdown(R,t){
+  const ids=['c_year','c_outcome','c_sleeve','c_wday','c_roll50','c_qty','c_hold','c_exit','c_hour','c_roll250'];
+  if(!R.n){ids.forEach(i=>empty(i,'nincs trade'));$('t_mon').replaceChildren();$('t_ls').replaceChildren();return;}
+  const Y=[...grp(S.T,x=>x.dk.slice(0,4)).values()].sort((a,b)=>a.k<b.k?-1:1);
+  chart('c_year').setOption(barsPN(t,Y.map(g=>g.k),Y.map(g=>Math.round(g.net)),Y.map(g=>`${kusd(g.net)}\n${g.n} trade · ${pct(g.wr,0)} nyer · PF ${fx(g.pf)}`)),true);
+  // havi táblázat (egyben a táblázat-nézet): eltérő skála, kék +, piros −, semleges szürke középpont
+  const M=grp(S.T,x=>x.dk.slice(0,7));const yrs=Y.map(g=>g.k),mx=Math.max(1,...[...M.values()].map(g=>Math.abs(g.net)));
+  const mix=(c1,c2,f)=>{const h=s=>[1,3,5].map(i=>parseInt(s.slice(i,i+2),16));const a=h(c1),b=h(c2);return'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*f)).join(',')+')';};
+  const lum=c=>{const m=c.match(/\d+/g).map(Number).map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4;});return .2126*m[0]+.7152*m[1]+.0722*m[2];};
+  const head=el('tr',null,el('th',{class:'yr'},''),...['J','F','M','Á','M','J','J','A','Sz','O','N','D'].map(m=>el('th',null,m)),el('th',{class:'n'},'év'));
+  const rows=yrs.map(y=>el('tr',null,el('td',{class:'yr'},y),...Array.from({length:12},(_,i)=>{const g=M.get(`${y}-${String(i+1).padStart(2,'0')}`);if(!g)return el('td',null,'');
+      const f=Math.sqrt(Math.abs(g.net)/mx);const bg=mix(t.mid,g.net>=0?t.pos:t.neg,Math.min(1,.15+.85*f));const fg=lum(bg)>.35?'#111':'#fff';
+      return el('td',{class:'c',style:`background:${bg};color:${fg}`,title:`${y}-${i+1}: ${usdS(g.net)} · ${g.n} trade · ${pct(g.wr,0)} nyerő`},kusd(g.net).replace('$',''));}),
+    el('td',{class:'y mono'},kusd(Y.find(g=>g.k===y).net))));
+  $('t_mon').replaceChildren(el('thead',null,head),el('tbody',null,...rows));
+  const pm=[...M.values()];$('cap_mon').textContent=`${pm.filter(g=>g.net>0).length} pozitív · ${pm.filter(g=>g.net<=0).length} negatív hónap · cella = nettó $ (k = ezer)`;
+  // kimenetek
+  const us=[...R.us].sort((a,b)=>a-b),lo=pctl(us,.005),hi=pctl(us,.995),h=hist(us,48,lo,hi);
+  $('cap_out').textContent=`nettó $ / trade · átlag ${usd(R.avg)} · a szélső 0,5 %-ok a széleken kívül`;
+  chart('c_outcome').setOption(Object.assign(base(t),{tooltip:Object.assign(base(t).tooltip,{trigger:'item',formatter:p=>`${usd(h.e[p.dataIndex]-h.w/2)} … ${usd(h.e[p.dataIndex]+h.w/2)}<br><b>${nf0.format(p.value[1])}</b> trade`}),
+    xAxis:ax(t,{type:'value',min:lo,max:hi,splitLine:{show:false},axisLabel:{color:t.muted,fontSize:11,formatter:kusd}}),yAxis:ax(t,{type:'value'}),
+    series:[{type:'bar',barWidth:'90%',data:h.c.map((v,i)=>({value:[h.e[i],v],itemStyle:{color:h.e[i]>=0?t.pos:t.neg,borderRadius:[2,2,0,0]}})),markLine:mline(t,[{xAxis:R.avg,label:{formatter:'átlag '+usd(R.avg),color:t.ink}}],t.ink)}]}),true);
+  // sleeve-ek (vízszintes, a sleeve saját színével — a szín a sleeve-et követi)
+  const SL=[...grp(S.T,x=>x.s).values()].sort((a,b)=>a.net-b.net);const nm=Object.fromEntries(port().sleeves.map(s=>[s.k,s.nev]));
+  chart('c_sleeve').setOption(Object.assign(base(t),{grid:{left:6,right:96,top:10,bottom:6,containLabel:true},tooltip:Object.assign(base(t).tooltip,{trigger:'item',formatter:p=>{const g=SL[p.dataIndex];return`<b>${nm[g.k]||g.k}</b><br>${usdS(g.net)} · ${g.n} trade · PF ${fx(g.pf)} · ${pct(g.wr,0)} nyerő`;}}),
+    yAxis:ax(t,{type:'category',data:SL.map(g=>g.k),axisLabel:{color:t.ink,fontSize:12}}),xAxis:Object.assign(yUsd(t),{splitLine:{lineStyle:{color:t.grid}}}),
+    series:[{type:'bar',barMaxWidth:22,data:SL.map(g=>({value:Math.round(g.net),itemStyle:{color:scol(t,g.k),borderRadius:g.net>=0?[0,4,4,0]:[4,0,0,4]}})),
+      label:{show:true,position:'right',color:t.muted,fontSize:10.5,formatter:p=>{const g=SL[p.dataIndex];return`${kusd(g.net)} · ${g.n} · PF ${fx(g.pf)}`;}}}]}),true);
+  // long / short
+  const LS=grp(S.T,x=>x.d>0?'Long':'Short'),A={k:'Összes',n:R.n,net:R.net,pf:R.pf,wr:R.wr};
+  const ddOf=k=>{let e=0,p=0,m=0;for(const x of S.T){if(k&&((x.d>0)!==(k==='Long')))continue;e+=x.u;if(e>p)p=e;if(p-e>m)m=p-e;}return m;};
+  $('t_ls').replaceChildren(el('thead',null,el('tr',null,...['','trade','nettó','nyerő','PF','átlag','max DD'].map((h,i)=>el('th',{class:i?'n':''},h)))),
+    el('tbody',null,...['Long','Short',null].map(k=>{const g=k?LS.get(k):A;if(!g)return null;return el('tr',null,el('td',{style:'font-weight:600'},k||'Összes'),el('td',{class:'n'},nf0.format(g.n)),el('td',{class:'n'},usd(g.net)),el('td',{class:'n'},pct(g.wr,0)),el('td',{class:'n'},fx(g.pf)),el('td',{class:'n'},usd(g.net/g.n)),el('td',{class:'n'},usd(-ddOf(k))));})));
+  // hét napjai
+  const WD=grp(S.T,x=>new Date(dms(x.dk)).getUTCDay());const wn=['','Hé','Ke','Sze','Csü','Pé'];const wk=[1,2,3,4,5].filter(d=>WD.has(d));
+  chart('c_wday').setOption(barsPN(t,wk.map(d=>wn[d]),wk.map(d=>Math.round(WD.get(d).net)),wk.map(d=>{const g=WD.get(d);return`${kusd(g.net)}\n${g.n} trade · PF ${fx(g.pf)} · ${pct(g.wr,0)} nyerő`;})),true);
+  // gördülő 50
+  chart('c_roll50').setOption(Object.assign(base(t),{tooltip:Object.assign(base(t).tooltip,{trigger:'axis',formatter:p=>new Date(p[0].value[0]).toLocaleDateString('hu-HU')+'<br>'+row(t.pos,'50 trade átlaga',usd(p[0].value[1]))}),
+    xAxis:tax(t),yAxis:yUsd(t),
+    series:[{type:'line',showSymbol:false,sampling:'lttb',data:R.roll,lineStyle:{width:1.5,color:t.pos},itemStyle:{color:t.pos},markLine:mline(t,[{yAxis:0,label:{formatter:'0'}},{yAxis:R.avg,label:{formatter:'átlag '+usd(R.avg)}}])}]}),true);
+  // kontraktusszám
+  const Q=[...grp(S.T,x=>x.q).values()].sort((a,b)=>a.k-b.k);
+  chart('c_qty').setOption(barsPN(t,Q.map(g=>String(g.k)),Q.map(g=>Math.round(g.net)),Q.map(g=>`${kusd(g.net)}\n${g.n} trade · ${pct(g.wr,0)} nyerő`),{}),true);
+  // idő a trade-ben
+  const allH=[...R.holdW,...R.holdL].sort((a,b)=>a-b),hhi=Math.max(10,pctl(allH,.98)),hw=hist(R.holdW,30,0,hhi),hl=hist(R.holdL,30,0,hhi);
+  $('cap_hold').textContent=`perc · nyerők mediánja ${fx(pctl([...R.holdW].sort((a,b)=>a-b),.5),0)} p · vesztők ${fx(pctl([...R.holdL].sort((a,b)=>a-b),.5),0)} p · a felső 2 % levágva`;
+  chart('c_hold').setOption(Object.assign(base(t),{grid:{left:6,right:18,top:26,bottom:26,containLabel:true},legend:{top:0,right:0,icon:'rect',itemWidth:10,itemHeight:10,textStyle:{color:t.muted,fontSize:11}},
+    tooltip:Object.assign(base(t).tooltip,{trigger:'axis',formatter:p=>`${fx(hw.e[p[0].dataIndex]-hw.w/2,0)}–${fx(hw.e[p[0].dataIndex]+hw.w/2,0)} perc<br>`+p.map(x=>row(x.color,x.seriesName,nf0.format(x.value[1]))).join('')}),
+    xAxis:ax(t,{type:'value',min:0,max:hhi,splitLine:{show:false},name:'perc',nameLocation:'middle',nameGap:22,nameTextStyle:{color:t.muted,fontSize:11}}),yAxis:ax(t,{type:'value'}),
+    series:[{name:'nyerő',type:'bar',stack:'h',barWidth:'90%',data:hw.c.map((v,i)=>[hw.e[i],v]),itemStyle:{color:t.pos}},{name:'vesztő',type:'bar',stack:'h',data:hl.c.map((v,i)=>[hl.e[i],v]),itemStyle:{color:t.neg,borderRadius:[2,2,0,0]}}]}),true);
+  // kilépés oka
+  const XR=[...grp(S.T,x=>x.x||'?').values()].sort((a,b)=>a.net-b.net);const xn={tp:'cél (tp)',stop:'stop',time:'időzárás',flatten:'zárás 16:05','flatten-guard':'zárás 16:05',cond1530:'feltételes 15:30','dll-guard':'napi limit-őr','loss-stop':'napi veszteség-stop'};
+  chart('c_exit').setOption(Object.assign(base(t),{grid:{left:6,right:80,top:10,bottom:6,containLabel:true},tooltip:Object.assign(base(t).tooltip,{trigger:'item',formatter:p=>{const g=XR[p.dataIndex];return`<b>${xn[g.k]||g.k}</b><br>${usdS(g.net)} · ${g.n} trade`;}}),
+    yAxis:ax(t,{type:'category',data:XR.map(g=>xn[g.k]||g.k),axisLabel:{color:t.ink,fontSize:12}}),xAxis:yUsd(t),
+    series:[{type:'bar',barMaxWidth:22,data:XR.map(g=>({value:Math.round(g.net),itemStyle:{color:g.net>=0?t.pos:t.neg,borderRadius:g.net>=0?[0,4,4,0]:[4,0,0,4]}})),label:{show:true,position:'right',color:t.muted,fontSize:10.5,formatter:p=>`${kusd(XR[p.dataIndex].net)} · ${XR[p.dataIndex].n}`}}]}),true);
+  // belépés órája
+  const HR=grp(S.T,x=>+x.te.slice(11,13));const hk=[...HR.keys()].sort((a,b)=>a-b);
+  chart('c_hour').setOption(barsPN(t,hk.map(h=>String(h).padStart(2,'0')),hk.map(h=>Math.round(HR.get(h).net)),hk.map(h=>{const g=HR.get(h);return`${kusd(g.net)}\n${g.n} trade · PF ${fx(g.pf)}`;}),{}),true);
+  // gördülő 250 nap
+  if(R.dv.length<260){empty('c_roll250','legalább ~260 kereskedési nap kell');}
+  else{const r=[];let s=0;for(let i=0;i<R.dv.length;i++){s+=R.dv[i];if(i>=250)s-=R.dv[i-250];if(i>=249)r.push([dlocal(R.cal[i]),s]);}
+    chart('c_roll250').setOption(Object.assign(base(t),{tooltip:Object.assign(base(t).tooltip,{trigger:'axis',formatter:p=>new Date(p[0].value[0]).toLocaleDateString('hu-HU')+'<br>'+row(t.pos,'előző 250 nap',usd(p[0].value[1]))}),
+      xAxis:tax(t),yAxis:yUsd(t),series:[{type:'line',showSymbol:false,sampling:'lttb',data:r,lineStyle:{width:1.5,color:t.pos},itemStyle:{color:t.pos},areaStyle:{color:t.pos,opacity:.08},markLine:mline(t,[{yAxis:0,label:{formatter:'0'}}])}]}),true);}
+}
+function portfolio(R,t){
+  if(!R.n){empty('c_sleq','nincs trade');empty('c_corr','nincs trade');$('t_sl').replaceChildren();return;}
+  const p=port(),keys=p.sleeves.map(s=>s.k).filter(k=>S.T.some(x=>x.s===k)),nm=Object.fromEntries(p.sleeves.map(s=>[s.k,s.nev])),rk=Object.fromEntries(p.sleeves.map(s=>[s.k,s.kock]));
+  const cal=R.cal,ix=new Map(cal.map((d,i)=>[d,i]));const D=Object.fromEntries(keys.map(k=>[k,new Float64Array(cal.length)]));for(const x of S.T)if(D[x.s])D[x.s][ix.get(x.dk)]+=x.u;
+  const tot=new Float64Array(cal.length);keys.forEach(k=>D[k].forEach((v,i)=>tot[i]+=v));
+  const corr=(a,b)=>{const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;let sab=0,saa=0,sbb=0;for(let i=0;i<n;i++){const x=a[i]-ma,y=b[i]-mb;sab+=x*y;saa+=x*x;sbb+=y*y;}return saa>0&&sbb>0?sab/Math.sqrt(saa*sbb):NaN;};
+  const G=grp(S.T,x=>x.s);
+  const rows=keys.map(k=>{const g=G.get(k),T=S.T.filter(x=>x.s===k);let e=0,pk=0,m=0;for(const x of T){e+=x.u;if(e>pk)pk=e;if(pk-e>m)m=pk-e;}
+    const rest=tot.map((v,i)=>v-D[k][i]);const n26=T.filter(x=>x.dk>='2026').reduce((a,x)=>a+x.u,0),c26=T.filter(x=>x.dk>='2026').length;
+    return el('tr',null,el('td',null,el('span',{class:'sw-i',style:`background:${scol(t,k)}`}),nm[k]||k),el('td',{class:'n'},'$'+nf0.format(rk[k]||0)),el('td',{class:'n'},nf0.format(g.n)),el('td',{class:'n'},usd(g.net)),
+      el('td',{class:'n'},R.net>0?pct(g.net/R.net,0):'–'),el('td',{class:'n'},fx(g.pf)),el('td',{class:'n'},pct(g.wr,0)),el('td',{class:'n'},fx(T.reduce((a,x)=>a+(+x.R||0),0)/T.length,3)+' R'),el('td',{class:'n'},usd(g.net/g.n)),
+      el('td',{class:'n'},usd(-m)),el('td',{class:'n'},c26?`${usd(n26)} (${c26})`:'–'),el('td',{class:'n'},keys.length>1?fx(corr(D[k],rest)):'–'));});
+  $('t_sl').replaceChildren(el('thead',null,el('tr',null,...['sleeve','kockázat','trade','nettó','részesedés','PF','nyerő','átlag R','átlag $','max DD','2026 (trade)','korr. a többivel'].map((h,i)=>el('th',{class:i?'n':''},h)))),el('tbody',null,...rows));
+  const ser=keys.map(k=>{let e=0;const d=[];for(const x of S.T)if(x.s===k){e+=x.u;d.push([lms(x.tx),e]);}return{name:k,type:'line',showSymbol:false,sampling:'lttb',data:d,lineStyle:{width:1.6,color:scol(t,k)},itemStyle:{color:scol(t,k)}};});
+  chart('c_sleq').setOption(Object.assign(base(t),{legend:{top:0,left:0,icon:'rect',itemWidth:12,itemHeight:2,textStyle:{color:t.muted,fontSize:11},inactiveColor:t.axis},grid:{left:6,right:18,top:34,bottom:6,containLabel:true},
+    tooltip:Object.assign(base(t).tooltip,{trigger:'axis',formatter:p=>new Date(p[0].value[0]).toLocaleDateString('hu-HU')+'<br>'+p.map(x=>row(x.color,x.seriesName,usd(x.value[1]))).join('')}),
+    xAxis:tax(t),yAxis:yUsd(t),series:ser}),true);
+  if(keys.length<2){empty('c_corr','egy sleeve — nincs mivel korrelálni');return;}
+  const data=[];keys.forEach((a,i)=>keys.forEach((b,j)=>data.push([j,i,+corr(D[a],D[b]).toFixed(2)])));
+  chart('c_corr').setOption(Object.assign(base(t),{grid:{left:6,right:10,top:10,bottom:6,containLabel:true},tooltip:Object.assign(base(t).tooltip,{trigger:'item',formatter:p=>`${keys[p.value[1]]} × ${keys[p.value[0]]}<br><b>${fx(p.value[2])}</b>`}),
+    xAxis:ax(t,{type:'category',data:keys,splitLine:{show:false},axisLabel:{color:t.ink,fontSize:12}}),yAxis:ax(t,{type:'category',data:keys,inverse:true,splitLine:{show:false},axisLabel:{color:t.ink,fontSize:12}}),
+    visualMap:{show:false,min:-1,max:1,inRange:{color:[t.neg,t.mid,t.pos]}},
+    series:[{type:'heatmap',data,itemStyle:{borderColor:t.surface,borderWidth:2,borderRadius:4},label:{show:true,color:t.ink,fontSize:11,formatter:p=>p.value[0]===p.value[1]?'':fx(p.value[2])}}]}),true);
+}
+function topstep(R,t){
+  if(!R.n){['c_daily','c_combine','c_conc'].forEach(i=>empty(i,'nincs trade'));return;}
+  const dv=[...R.tdv].sort((a,b)=>a-b),lo=Math.min(-1100,pctl(dv,.002)),hi=pctl(dv,.998),h=hist(dv,44,lo,hi);
+  $('cap_daily').textContent=`kereskedési napok · legrosszabb ${usd(R.worstDay)} · ≤ −$1 000: ${R.dll} nap · pozitív ${pct(R.posDays,0)}`;
+  chart('c_daily').setOption(Object.assign(base(t),{tooltip:Object.assign(base(t).tooltip,{trigger:'item',formatter:p=>`${usd(h.e[p.dataIndex]-h.w/2)} … ${usd(h.e[p.dataIndex]+h.w/2)}<br><b>${nf0.format(p.value[1])}</b> nap`}),
+    xAxis:ax(t,{type:'value',min:lo,max:hi,splitLine:{show:false},axisLabel:{color:t.muted,fontSize:11,formatter:kusd}}),yAxis:ax(t,{type:'value'}),
+    series:[{type:'bar',barWidth:'90%',data:h.c.map((v,i)=>({value:[h.e[i],v],itemStyle:{color:h.e[i]>=0?t.pos:t.neg,borderRadius:[2,2,0,0]}})),markLine:mline(t,[{xAxis:-1000,label:{formatter:'napi limit −$1 000',color:t.ink}}],t.accent)}]}),true);
+  const C=R.combine,mx=Math.max(10,...C.pass,...C.bust),bins=Math.min(40,mx),hp=hist(C.pass,bins,0,mx),hb=hist(C.bust,bins,0,mx);
+  $('cap_comb').textContent=`${nf0.format(C.n)} kezdőnap · átment ${pct(C.pPass,0)} (medián ${isFinite(C.medPass)?C.medPass:'–'} nap) · bukott ${pct(C.pBust,0)} · nyitva maradt ${C.open} · a valódi napi sorrenddel`;
+  chart('c_combine').setOption(Object.assign(base(t),{grid:{left:6,right:18,top:26,bottom:26,containLabel:true},legend:{top:0,right:0,icon:'rect',itemWidth:10,itemHeight:10,textStyle:{color:t.muted,fontSize:11}},
+    tooltip:Object.assign(base(t).tooltip,{trigger:'axis',formatter:p=>`${fx(hp.e[p[0].dataIndex]-hp.w/2,0)}–${fx(hp.e[p[0].dataIndex]+hp.w/2,0)} nap<br>`+p.map(x=>row(x.color,x.seriesName,nf0.format(x.value[1]))).join('')}),
+    xAxis:ax(t,{type:'value',min:0,max:mx,splitLine:{show:false},name:'kereskedési nap a kimenetelig',nameLocation:'middle',nameGap:22,nameTextStyle:{color:t.muted,fontSize:11}}),yAxis:ax(t,{type:'value'}),
+    series:[{name:'átment',type:'bar',stack:'c',barWidth:'90%',data:hp.c.map((v,i)=>[hp.e[i],v]),itemStyle:{color:t.pos}},{name:'bukott',type:'bar',stack:'c',data:hb.c.map((v,i)=>[hb.e[i],v]),itemStyle:{color:t.neg,borderRadius:[2,2,0,0]}}]}),true);
+  const sd=[...R.tdv].sort((a,b)=>b-a);let c=0;const cs=sd.slice(0,50).map((v,i)=>[i+1,R.net>0?(c+=v)/R.net:NaN]);
+  $('cap_conc').textContent=`a legjobb N nap összege a teljes nettó %-ában · top-10: ${pct(R.top10,0)} (kapu ≤ 30 %) · legjobb nap ${pct(R.bestShare,1)}`;
+  chart('c_conc').setOption(Object.assign(base(t),{grid:{left:6,right:18,top:26,bottom:26,containLabel:true},tooltip:Object.assign(base(t).tooltip,{trigger:'axis',formatter:p=>`a legjobb ${p[0].value[0]} nap<br>`+row(t.pos,'a nettó %-a',pct(p[0].value[1],1))}),
+    xAxis:ax(t,{type:'value',min:1,max:50,splitLine:{show:false},name:'a legjobb N nap',nameLocation:'middle',nameGap:22,nameTextStyle:{color:t.muted,fontSize:11}}),
+    yAxis:ax(t,{type:'value',axisLabel:{color:t.muted,fontSize:11,formatter:v=>pct(v,0)}}),
+    series:[{type:'line',data:cs,showSymbol:false,lineStyle:{width:2,color:t.pos},itemStyle:{color:t.pos},areaStyle:{color:t.pos,opacity:.08},
+      markLine:mline(t,[{yAxis:.3,label:{formatter:'30 % kapu'}},{xAxis:10,label:{formatter:'top-10'}}],t.accent)}]}),true);
+}
+function renderList(){
+  const T=S.T,show=S.tlAll?T.slice().reverse():T.slice(-150).reverse();const nm=Object.fromEntries(port().sleeves.map(s=>[s.k,s.nev])),t=TH();
+  $('tl_sub').textContent=`${nf0.format(T.length)} trade a szűrésben`;$('tl_note').textContent=S.tlAll?`mind a ${nf0.format(T.length)} trade, a legújabb elöl`:`az utolsó ${Math.min(150,T.length)} trade, a legújabb elöl`;$('tl_more').textContent=S.tlAll?'csak az utolsó 150':'mind';
+  $('t_tl').replaceChildren(el('thead',null,el('tr',null,...['belépés (ET)','kilépés (ET)','sleeve','irány','db','instr.','R','$','kilépés','forrás'].map((h,i)=>el('th',{class:[4,6,7].includes(i)?'n':''},h)))),
+    el('tbody',null,...show.map(x=>el('tr',null,el('td',{class:'mono'},x.te.replace('T',' ')),el('td',{class:'mono'},x.tx.replace('T',' ')),el('td',null,el('span',{class:'sw-i',style:`background:${scol(t,x.s)}`}),x.s),
+      el('td',null,x.d>0?'long':'short'),el('td',{class:'n'},x.q),el('td',null,x.i),el('td',{class:'n'},fx(+x.R,2)),el('td',{class:'n '+(x.u>=0?'pos':'neg')},usdS(x.u)),el('td',null,x.x||''),el('td',null,x.src==='elo'?el('span',{class:'badge'},'élő'):'visszajátszás')))));
+  $('foot').textContent=`${bot().nev} · ${port().nev} · a dollárok költséggel (MNQ $1,22 · MGC $2 · MES $2,5 · M2K $1,75 / kontraktus) · a visszajátszás a bot saját kódja (Runner + PaperBroker, limit-belépő, 1 perces bárok) · a Monte Carlo és a Combine-szimuláció leíró, nem előrejelzés · a trade-P&L összege nem a kifizetett összeg (a bukott fiókok újraindulnak).`;
+}
+load().catch(e=>{$('err').textContent='Betöltési hiba: '+e.message;$('sub').textContent='';});
+</script>
+</body>
+</html>
