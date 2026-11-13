@@ -237,12 +237,12 @@ dialog#pinDlg::backdrop{background:rgba(4,6,15,.78)}
     <div class="row"><button class="btn" type="button" id="pinNo">Mégse</button><button class="btn" type="submit" id="pinOk">Küldés</button></div>
   </form></dialog>
   <section>
-    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>Aktív számlák</h2><small id="actNote"></small></div>
+    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>Számlák</h2><small id="actNote"></small></div>
     <div class="cards" id="cards" style="margin-top:12px"></div>
   </section>
   <section id="detail" hidden></section>
   <section id="closedSec" hidden>
-    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M6 7v11a2 2 0 002 2h8a2 2 0 002-2V7M9 7V4h6v3M10 11v5M14 11v5"/></svg>Lezárt számlák</h2><small>Átment, bukott vagy megszűnt fiókok. A költésük és a kifizetéseik az összesítésben benne vannak.</small></div>
+    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M6 7v11a2 2 0 002 2h8a2 2 0 002-2V7M9 7V4h6v3M10 11v5M14 11v5"/></svg>Lezárt számlák</h2><small>Bukott vagy megszűnt fiókok. A költésük és a kifizetéseik az összesítésben benne vannak.</small></div>
     <div class="cards" id="closed" style="margin-top:12px"></div>
   </section>
   <p class="note" id="foot"></p>
@@ -377,12 +377,12 @@ function renderOrbit(){
       <text x="${CX}" y="${CY+36}" text-anchor="middle" font-size="12.5" style="font-family:'Exo 2',sans-serif;fill:var(--muted)">mérleg: kifizetés − költés</text>`;
   ORB.nodes=[];
   for(const [k,r,c] of rings) grp[k].forEach((a,i)=>{
-    const pay=a.kifizetheto&&a.kifizetheto.lehet, rad=k==='off'?5:9, col=a.allapot==='bukott'?'var(--floor)':c;
+    const pay=a.kifizetheto&&a.kifizetheto.lehet, won=a.allapot==='passzolt', rad=won?8:k==='off'?5:9, col=won?'var(--gold)':a.allapot==='bukott'?'var(--floor)':c;
     h+=`<g class="node" data-id="${esc(a.id)}" data-r="${r}" data-ph="${(i/grp[k].length*360+(k==='eval'?35:k==='off'?200:300)).toFixed(1)}" role="button" tabindex="0" aria-label="${esc(a.ceg)} ${esc(a.csomag)}, ${esc(short(a.id))}: ${usd(a.egyenleg)}">
       ${pay?`<circle r="${rad+9}" fill="none" stroke="var(--gold)" stroke-width="1.5" filter="url(#glow)"/>`:''}
       <circle class="halo" r="${rad+4}" fill="${col}" fill-opacity=".16" stroke="${S.sel===a.id?'#fff':'none'}"/>
       <circle r="${rad}" fill="${col}" filter="url(#glow)"/>
-      ${k==='off'||M?'':`<text x="${rad+12}" y="-2" font-size="13.5" font-weight="600">${esc(a.ceg)}</text><text x="${rad+12}" y="15" font-size="12.5" style="font-family:'Exo 2',sans-serif;fill:var(--muted)">${PH[a.fazis]||''}, ${usd(a.egyenleg)}</text>`}
+      ${(k==='off'&&!won)||M?'':`<text x="${rad+12}" y="-2" font-size="13.5" font-weight="600" ${won?'style="fill:#FFE9A6"':''}>${esc(a.ceg)}</text><text x="${rad+12}" y="15" font-size="12.5" style="font-family:'Exo 2',sans-serif;fill:${won?'var(--gold)':'var(--muted)'}">${won?'Átment':(PH[a.fazis]||'')}, ${usd(a.egyenleg)}</text>`}
     </g>`; });
   sv.innerHTML=h;
   sv.querySelectorAll('.node').forEach(g=>{ ORB.nodes.push({g,r:+g.dataset.r,ph:+g.dataset.ph}); const f=()=>pick(g.dataset.id,true); g.onclick=f; g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f();}}; });
@@ -392,7 +392,7 @@ function renderOrbit(){
   if(!still) document.onvisibilitychange=()=>{ if(!document.hidden){ cancelAnimationFrame(ORB.raf); ORB.raf=requestAnimationFrame(loop); } };
 }
 function renderCards(){
-  const A=accts(), act=A.filter(a=>a.allapot==='aktív'), cl=A.filter(a=>a.allapot!=='aktív').sort((x,y)=>(y.allapot==='passzolt')-(x.allapot==='passzolt'));
+  const A=accts(), won=A.filter(a=>a.allapot==='passzolt'), act=A.filter(a=>a.allapot==='aktív').concat(won), cl=A.filter(a=>a.allapot!=='aktív'&&a.allapot!=='passzolt');
   $('cards').innerHTML=act.length?act.map(card).join(''):'<div class="empty">Nincs aktív számla.</div>';
   $('actNote').textContent=act.length?'Kattints egy kártyára a naptárért és a részletekért.':'';
   $('closedSec').hidden=!cl.length; $('closed').innerHTML=cl.map(card).join('');
