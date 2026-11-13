@@ -164,6 +164,25 @@ table.tr td.r{font-family:"Chakra Petch",sans-serif}
 .empty{color:var(--muted);font-size:14px;padding:8px 0}
 .note{font-size:13px;color:var(--muted);max-width:90ch}
 
+.ctl{display:grid;gap:10px}
+.crow{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1.4fr) auto;gap:14px;align-items:center;padding:12px 16px;background:rgba(16,26,56,.55);border:1px solid var(--line);border-left:3px solid var(--st,var(--muted))}
+.crow .n b{display:block;font-family:"Chakra Petch",sans-serif;font-weight:600} .crow .n span,.crow .s span{font-size:13px;color:var(--muted)}
+.crow .s b{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--st)} .crow .s b i{width:8px;height:8px;border-radius:50%;background:var(--st);box-shadow:0 0 10px var(--st)}
+.crow.run{--st:var(--pos)} .crow.pause{--st:var(--gold)} .crow.down{--st:var(--floor)}
+.sw{position:relative;width:64px;height:32px;border:1px solid var(--line-2);background:rgba(8,12,30,.9);cursor:pointer;padding:0;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.sw::after{content:"";position:absolute;top:4px;left:4px;width:22px;height:22px;background:var(--muted);transition:transform .18s,background .18s}
+.sw[aria-checked="true"]{border-color:var(--pos)} .sw[aria-checked="true"]::after{transform:translateX(32px);background:var(--pos);box-shadow:0 0 12px var(--pos)}
+.sw:disabled{opacity:.4;cursor:not-allowed} .sw:focus-visible,.btn:focus-visible{outline:2px solid var(--funded);outline-offset:3px}
+.botline{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--st,var(--muted))} .botline i{width:7px;height:7px;border-radius:50%;background:var(--st,var(--muted))}
+.botline.run{--st:var(--pos)} .botline.pause{--st:var(--gold)} .botline.down{--st:var(--floor)}
+dialog#pinDlg{background:var(--panel);color:var(--ink);border:1px solid var(--line-2);padding:24px;width:min(380px,calc(100vw - 32px));font-family:inherit}
+dialog#pinDlg::backdrop{background:rgba(4,6,15,.78)}
+#pinDlg h3{margin:0 0 6px;font-size:18px} #pinDlg p{margin:0 0 16px;color:var(--muted);font-size:14px}
+#pinDlg label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+#pinDlg input{width:100%;box-sizing:border-box;background:var(--void);border:1px solid var(--line-2);color:var(--ink);font:600 24px "Chakra Petch",sans-serif;letter-spacing:.3em;padding:10px 12px}
+#pinDlg input:focus{outline:2px solid var(--funded);outline-offset:1px}
+#pinDlg .row{display:flex;gap:10px;justify-content:flex-end;margin-top:18px} #pinMsg{min-height:20px;margin-top:10px;font-size:14px}
+@media (max-width:720px){ .crow{grid-template-columns:minmax(0,1fr) auto} .crow .s{grid-column:1;grid-row:2} .crow .sw{grid-column:2;grid-row:1 / span 2} }
 @media (max-width:900px){ .grid{grid-template-columns:1fr} .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 0} .kpis div:nth-child(4){padding-left:0;border-left:0} }
 @media (max-width:720px){
   #scene{height:300px} .hud{position:static;min-width:0} .hud.tr,.hud.br{text-align:left;align-items:flex-start}
@@ -193,6 +212,16 @@ table.tr td.r{font-family:"Chakra Petch",sans-serif}
     <div class="huds" id="huds"></div>
   </section>
   <div id="paybar"></div>
+  <section id="ctlSec" hidden>
+    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M5 4v6M5 14v6M12 4v2M12 10v10M19 4v9M19 17v3"/><path d="M3 10h4v4H3zM10 6h4v4h-4zM17 13h4v4h-4z"/></svg>Vezérlőpult</h2><small id="ctlNote"></small></div>
+    <div class="ctl" id="ctl" style="margin-top:12px"></div>
+  </section>
+  <dialog id="pinDlg" aria-labelledby="pinT"><form method="dialog" id="pinForm">
+    <h3 id="pinT"></h3><p id="pinD"></p>
+    <label for="pinIn">PIN-kód</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" maxlength="12" required>
+    <div id="pinMsg" role="status"></div>
+    <div class="row"><button class="btn" type="button" id="pinNo">Mégse</button><button class="btn" type="submit" id="pinOk">Küldés</button></div>
+  </form></dialog>
   <section>
     <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>Aktív számlák</h2><small id="actNote"></small></div>
     <div class="cards" id="cards" style="margin-top:12px"></div>
@@ -206,7 +235,8 @@ table.tr td.r{font-family:"Chakra Petch",sans-serif}
 </div>
 <script>
 const DATA_URL='https://rfmmwzrgxxcaknufcfui.supabase.co/storage/v1/object/public/paper/accounts.json';
-const S={data:null,sel:null,month:null,day:null};
+const CTL_URL='https://rfmmwzrgxxcaknufcfui.supabase.co/storage/v1/object/public/paper/control.json';
+const S={data:null,sel:null,month:null,day:null,ctl:null,pin:null,busy:false};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const grp=(x,d)=>{const [a,b]=Math.abs(x).toFixed(d).split('.'); return a.replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0')+(b?','+b:'');};
@@ -300,7 +330,7 @@ function card(a){
     <div class="hd"><div class="who">${emblem(a)}<div style="min-width:0"><div class="firm">${esc(a.ceg)}</div><div class="plan">${esc(a.csomag)}, ${esc(short(a.id))}</div></div></div>${chip(a)}</div>
     <div class="core">${gauge(a)}<div><div class="bal">${usd(a.egyenleg)}</div><div class="sub">Eredmény <b class="${cls(a.pnl)}">${sgn(a.pnl)}</b></div>${act&&a.padlo!=null?`<div class="sub">Padló <span class="neg">${usd(a.padlo)}</span>${a.fazis==='eval'&&a.cel?`, cél ${usd(a.kezdo+a.cel)}`:''}</div>`:''}${a.nyitott?`<div class="sub">${a.nyitott} nyitott pozíció</div>`:''}${dayBars(a)}</div></div>
     <div class="kv">${kv.map(([k,v])=>`<span><span class="k">${k}</span><span class="v">${v}</span></span>`).join('')}</div>
-    ${payFlag(a)}
+    ${payFlag(a)}${botLine(a)}
     <div class="ft"><span>Ára ${a.ar_ismert?usd(a.koltes):'nincs megadva'}</span><span>${a.kifizetesek.length?a.kifizetesek.length+' kifizetés, '+usd(a.kapott):'még nincs kifizetés'}</span></div>
   </button></div>`;
 }
@@ -419,7 +449,43 @@ function renderDetail(){
   $('cal').querySelectorAll('.d.has').forEach(e=>{const f=()=>{S.day=S.day===e.dataset.d?null:e.dataset.d;renderDetail();}; e.onclick=f; e.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();f();}};});
   const c=$('clrDay'); if(c) c.onclick=ev=>{ev.preventDefault();S.day=null;renderDetail();};
 }
-function render(){ if(!S.data) return; renderSum(); renderCards(); renderDetail();
+// ── vezérlőpult: melyik bot kereskedjen. Az állapot a Pi-ről jön (control.json); a kapcsolás PIN-nel megy a Pi-nek, az ellenőrzi és hajtja végre.
+function botSt(id){ const C=S.ctl; if(!C||!C.botok||!C.botok[id]) return null; const b=C.botok[id], on=!(C.allapot&&C.allapot[id]&&C.allapot[id].trade===false);
+  return {b,on,k:!b.fut?'down':on?'run':'pause',t:!b.fut?'A bot nem fut':on?'Kereskedik':'Szünetel',d:!b.fut?(on?'a kapcsoló be van kapcsolva, de a program áll':'a kapcsoló ki van kapcsolva, a program áll'):on?(b.nyitott?b.nyitott+' nyitott pozíció':'új belépőt nyithat'):(b.nyitott?'új belépő nincs, '+b.nyitott+' nyitott pozíciót még kezel':'új belépőt nem nyit')}; }
+function botLine(a){ const s=botSt(a.id); if(!s) return ''; return `<div class="botline ${s.k}"><i></i>Bot: ${s.t.toLowerCase()}</div>`; }
+function ctlFresh(){ return S.ctl&&S.ctl.frissitve&&(Date.now()-new Date(S.ctl.frissitve).getTime()<180000); }
+function renderCtl(){ const C=S.ctl, sec=$('ctlSec'); if(!C||!C.botok||!Object.keys(C.botok).length){ sec.hidden=true; return; } sec.hidden=false;
+  const fresh=ctlFresh(), ids=Object.keys(C.botok).sort(), A=accts();
+  $('ctlNote').textContent=!fresh?'A Pi most nem válaszol, a kapcsolók nem használhatók.':C.zarolva?'A vezérlés zárolva van túl sok hibás PIN miatt.':!C.pin_van?'A Pi-n nincs PIN beállítva.':'A kapcsoló az új belépőket tiltja vagy engedi. A nyitott pozíciókat a bot szünetben is kezeli.';
+  const dis=(!fresh||C.zarolva||!C.pin_van||S.busy)?'disabled':'';
+  $('ctl').innerHTML=ids.map(id=>{ const s=botSt(id), a=A.find(x=>x.id===id);
+    return `<div class="crow ${s.k}"><div class="n"><b>${esc(a?a.ceg+' '+a.csomag:id)}</b><span>${esc(id)}, ${esc(s.b.broker||'')}</span></div><div class="s"><b><i></i>${s.t}</b><span>${s.d}</span></div><button type="button" class="sw" role="switch" aria-checked="${s.on}" aria-label="${esc(id)}: kereskedés" data-id="${esc(id)}" data-on="${s.on?1:0}" ${dis}></button></div>`; }).join('')
+    +(ids.length>1?`<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="allOff" ${dis}>Mind szünet</button><button class="btn" type="button" id="allOn" ${dis}>Mind kereskedjen</button></div>`:'');
+  $('ctl').querySelectorAll('.sw').forEach(e=>e.onclick=()=>askPin(e.dataset.id,e.dataset.on!=='1'));
+  const f=$('allOff'), n=$('allOn'); if(f) f.onclick=()=>askPin('*',false); if(n) n.onclick=()=>askPin('*',true);
+}
+async function loadCtl(){ try{ const r=await fetch((/[?&]local=1/.test(location.search)?'control.json':CTL_URL)+'?t='+Date.now(),{cache:'no-store'}); if(r.ok){ S.ctl=await r.json(); return true; } }catch(e){} return false; }
+function askPin(id,trade){ const a=accts().find(x=>x.id===id), nm=id==='*'?'Minden bot':(a?a.ceg+' '+a.csomag:id);
+  $('pinT').textContent=trade?'Kereskedés bekapcsolása':'Szüneteltetés'; $('pinD').textContent=nm+(trade?': a bot újra nyithat pozíciót.':': a bot nem nyit új pozíciót, a nyitottakat tovább kezeli.');
+  $('pinMsg').textContent=''; $('pinMsg').className=''; $('pinIn').value=S.pin||''; $('pinOk').disabled=false; S.req={id,trade}; $('pinDlg').showModal(); $('pinIn').focus(); }
+async function sendCtl(){ const q=S.req, pin=$('pinIn').value.trim(), msg=$('pinMsg'); if(!q||!pin) return;
+  const say=(t,c)=>{ msg.textContent=t; msg.className=c||'muted'; };
+  $('pinOk').disabled=true; S.busy=true; say('Küldés a Pi-nek…');
+  try{
+    await loadCtl(); const u=S.ctl&&S.ctl.feltoltes&&S.ctl.feltoltes.url; if(!u||!ctlFresh()) throw new Error('A Pi most nem válaszol. Próbáld újra egy perc múlva.');
+    const nonce=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)).slice(0,36);
+    const r=await fetch(u,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin,szamla:q.id,trade:q.trade,nonce})});
+    if(!r.ok) throw new Error('A kérés nem ment át (valaki más épp kapcsolt, vagy lejárt a cím). Próbáld újra.');
+    say('A Pi ellenőrzi a PIN-t…'); let res=null;
+    for(let i=0;i<25&&!res;i++){ await new Promise(z=>setTimeout(z,2000)); await loadCtl(); const l=S.ctl&&S.ctl.utolso; if(l&&l.nonce===nonce) res=l; }
+    if(!res) throw new Error('A Pi 50 másodpercen belül nem válaszolt. Nézd meg a kapcsoló állását, mielőtt újra küldöd.');
+    if(res.ok){ S.pin=pin; say(res.uzenet.charAt(0).toUpperCase()+res.uzenet.slice(1)+'. A bot a következő percben veszi át.','pos'); setTimeout(()=>{ if($('pinDlg').open) $('pinDlg').close(); },1400); }
+    else{ S.pin=null; $('pinIn').value=''; say(res.uzenet.charAt(0).toUpperCase()+res.uzenet.slice(1)+'.','neg'); $('pinOk').disabled=false; $('pinIn').focus(); }
+  }catch(e){ say(e.message,'neg'); $('pinOk').disabled=false; }
+  S.busy=false; render();
+}
+$('pinForm').addEventListener('submit',ev=>{ ev.preventDefault(); sendCtl(); }); $('pinNo').onclick=()=>$('pinDlg').close();
+function render(){ if(!S.data) return; renderSum(); renderCtl(); renderCards(); renderDetail();
   const d=new Date(S.data.frissitve); $('upd').className='upd'+(S.stale?' stale':''); $('upd').innerHTML='<i></i>'+(S.stale?'Mentett állapot, ':'Élő adat, ')+d.toLocaleString('hu-HU',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   $('err').innerHTML=(S.data.hibak||[]).length?`<div class="err">${S.data.hibak.map(esc).join('<br>')}</div>`:'';
   $('foot').textContent='Az egyenleg és a kötések a cégek rendszeréből jönnek, néhány percenként frissülve. A fiókok ára és a kifizetések a főkönyvből; a becsültként jelölt kifizetés összegét az egyenleg-változásból számolja az oldal.';
@@ -429,6 +495,7 @@ async function load(){
   if(!/[?&]local=1/.test(location.search)){ try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(r.ok) D=await r.json(); }catch(e){} }
   if(!D){ try{ const r=await fetch('accounts.json',{cache:'no-cache'}); if(r.ok){ D=await r.json(); S.stale=true; } }catch(e){} }
   if(!D){ if(!S.data) $('err').innerHTML='<div class="err">Az adat most nem érhető el. Az oldal percenként újrapróbálja.</div>'; return; }
+  if(!S.busy) await loadCtl();
   S.data=D; if(S.sel==null&&location.hash){ const h=decodeURIComponent(location.hash.slice(1)); if(accts().some(a=>a.id===h)) S.sel=h; }
   if(S.sel&&!sel()) S.sel=null; render();
 }
@@ -441,7 +508,7 @@ async function load(){
 })();
 matchMedia('(max-width:720px)').addEventListener('change',()=>{ if(S.data) renderOrbit(); });
 window.__fmt={usd,sgn,esc}; window.__pick=(id,sc)=>pick(id,sc); window.__fleetReady=()=>{ if(S.data) renderOrbit(); };
-load(); setInterval(load,60000);
+load(); setInterval(load,60000); setInterval(async()=>{ if(!S.busy&&!document.hidden&&S.data&&await loadCtl()){ renderCtl(); } },15000);
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
