@@ -173,6 +173,11 @@ table.tr td.r{font-family:"Chakra Petch",sans-serif}
 .sw::after{content:"";position:absolute;top:4px;left:4px;width:22px;height:22px;background:var(--muted);transition:transform .18s,background .18s}
 .sw[aria-checked="true"]{border-color:var(--pos)} .sw[aria-checked="true"]::after{transform:translateX(32px);background:var(--pos);box-shadow:0 0 12px var(--pos)}
 .sw:disabled{opacity:.4;cursor:not-allowed} .sw:focus-visible,.btn:focus-visible{outline:2px solid var(--funded);outline-offset:3px}
+.bstrip{display:flex;align-items:center;gap:12px;margin-top:6px;padding:10px 14px;background:rgba(8,12,30,.85);border:1px solid var(--line);border-left:3px solid var(--st,var(--line-2))}
+.bstrip .bs{flex:1;min-width:0} .bstrip .bs b{display:flex;align-items:center;gap:8px;font-family:"Chakra Petch",sans-serif;font-weight:600;color:var(--st,var(--muted))} .bstrip .bs b i{width:8px;height:8px;border-radius:50%;background:var(--st,var(--muted));box-shadow:0 0 10px var(--st,transparent)}
+.bstrip .bs span{display:block;font-size:13px;color:var(--muted)} .bstrip .swl{font:600 13px "Chakra Petch",sans-serif;color:var(--st,var(--muted));min-width:22px;text-align:right}
+.bstrip.run{--st:var(--pos)} .bstrip.pause{--st:var(--gold)} .bstrip.down{--st:var(--floor)} .bstrip.none .bs b{font-weight:500}
+.ctlsum{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;padding:12px 16px;background:rgba(16,26,56,.55);border:1px solid var(--line)} .ctlsum .t{flex:1;min-width:200px}
 .botline{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--st,var(--muted))} .botline i{width:7px;height:7px;border-radius:50%;background:var(--st,var(--muted))}
 .botline.run{--st:var(--pos)} .botline.pause{--st:var(--gold)} .botline.down{--st:var(--floor)}
 dialog#pinDlg{background:var(--panel);color:var(--ink);border:1px solid var(--line-2);padding:24px;width:min(380px,calc(100vw - 32px));font-family:inherit}
@@ -330,9 +335,9 @@ function card(a){
     <div class="hd"><div class="who">${emblem(a)}<div style="min-width:0"><div class="firm">${esc(a.ceg)}</div><div class="plan">${esc(a.csomag)}, ${esc(short(a.id))}</div></div></div>${chip(a)}</div>
     <div class="core">${gauge(a)}<div><div class="bal">${usd(a.egyenleg)}</div><div class="sub">Eredmény <b class="${cls(a.pnl)}">${sgn(a.pnl)}</b></div>${act&&a.padlo!=null?`<div class="sub">Padló <span class="neg">${usd(a.padlo)}</span>${a.fazis==='eval'&&a.cel?`, cél ${usd(a.kezdo+a.cel)}`:''}</div>`:''}${a.nyitott?`<div class="sub">${a.nyitott} nyitott pozíció</div>`:''}${dayBars(a)}</div></div>
     <div class="kv">${kv.map(([k,v])=>`<span><span class="k">${k}</span><span class="v">${v}</span></span>`).join('')}</div>
-    ${payFlag(a)}${botLine(a)}
+    ${payFlag(a)}
     <div class="ft"><span>Ára ${a.ar_ismert?usd(a.koltes):'nincs megadva'}</span><span>${a.kifizetesek.length?a.kifizetesek.length+' kifizetés, '+usd(a.kapott):'még nincs kifizetés'}</span></div>
-  </button></div>`;
+  </button>${botStrip(a)}</div>`;
 }
 const ORB={t0:performance.now(),raf:0,nodes:[]};
 function renderSum(){
@@ -452,18 +457,22 @@ function renderDetail(){
 // ── vezérlőpult: melyik bot kereskedjen. Az állapot a Pi-ről jön (control.json); a kapcsolás PIN-nel megy a Pi-nek, az ellenőrzi és hajtja végre.
 function botSt(id){ const C=S.ctl; if(!C||!C.botok||!C.botok[id]) return null; const b=C.botok[id], on=!(C.allapot&&C.allapot[id]&&C.allapot[id].trade===false);
   return {b,on,k:!b.fut?'down':on?'run':'pause',t:!b.fut?'A bot nem fut':on?'Kereskedik':'Szünetel',d:!b.fut?(on?'a kapcsoló be van kapcsolva, de a program áll':'a kapcsoló ki van kapcsolva, a program áll'):on?(b.nyitott?b.nyitott+' nyitott pozíció':'új belépőt nyithat'):(b.nyitott?'új belépő nincs, '+b.nyitott+' nyitott pozíciót még kezel':'új belépőt nem nyit')}; }
+function ctlDis(){ const C=S.ctl; return (!C||!ctlFresh()||C.zarolva||!C.pin_van||S.busy)?'disabled':''; }
+function swBtn(id,s){ return `<span class="swl">${s.on?'BE':'KI'}</span><button type="button" class="sw" role="switch" aria-checked="${s.on}" aria-label="${esc(id)}: a bot kereskedjen" data-id="${esc(id)}" data-on="${s.on?1:0}" ${ctlDis()}></button>`; }
+function botStrip(a){ const s=botSt(a.id);
+  if(!s) return (a.allapot==='aktív'&&/[A-Za-z]/.test(a.id)&&S.ctl&&S.ctl.botok)?`<div class="bstrip none"><div class="bs"><b><i></i>Nincs bot ezen a fiókon</b><span>csak kézi kereskedés</span></div></div>`:'';
+  return `<div class="bstrip ${s.k}"><div class="bs"><b><i></i>Bot: ${s.t.toLowerCase()}</b><span>${s.d}${a.allapot!=='aktív'?', a fiók lezárult':''}</span></div>${swBtn(a.id,s)}</div>`; }
 function botLine(a){ const s=botSt(a.id); if(!s) return ''; return `<div class="botline ${s.k}"><i></i>Bot: ${s.t.toLowerCase()}</div>`; }
 function ctlFresh(){ return S.ctl&&S.ctl.frissitve&&(Date.now()-new Date(S.ctl.frissitve).getTime()<180000); }
 function renderCtl(){ const C=S.ctl, sec=$('ctlSec'); if(!C||!C.botok||!Object.keys(C.botok).length){ sec.hidden=true; return; } sec.hidden=false;
-  const fresh=ctlFresh(), ids=Object.keys(C.botok).sort(), A=accts();
-  $('ctlNote').textContent=!fresh?'A Pi most nem válaszol, a kapcsolók nem használhatók.':C.zarolva?'A vezérlés zárolva van túl sok hibás PIN miatt.':!C.pin_van?'A Pi-n nincs PIN beállítva.':'A kapcsoló az új belépőket tiltja vagy engedi. A nyitott pozíciókat a bot szünetben is kezeli.';
-  const dis=(!fresh||C.zarolva||!C.pin_van||S.busy)?'disabled':'';
-  $('ctl').innerHTML=ids.map(id=>{ const s=botSt(id), a=A.find(x=>x.id===id);
-    return `<div class="crow ${s.k}"><div class="n"><b>${esc(a?a.ceg+' '+a.csomag:id)}</b><span>${esc(id)}, ${esc(s.b.broker||'')}</span></div><div class="s"><b><i></i>${s.t}</b><span>${s.d}</span></div><button type="button" class="sw" role="switch" aria-checked="${s.on}" aria-label="${esc(id)}: kereskedés" data-id="${esc(id)}" data-on="${s.on?1:0}" ${dis}></button></div>`; }).join('')
-    +(ids.length>1?`<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="allOff" ${dis}>Mind szünet</button><button class="btn" type="button" id="allOn" ${dis}>Mind kereskedjen</button></div>`:'');
-  $('ctl').querySelectorAll('.sw').forEach(e=>e.onclick=()=>askPin(e.dataset.id,e.dataset.on!=='1'));
-  const f=$('allOff'), n=$('allOn'); if(f) f.onclick=()=>askPin('*',false); if(n) n.onclick=()=>askPin('*',true);
+  const fresh=ctlFresh(), ids=Object.keys(C.botok).sort(), A=accts(), st=ids.map(botSt), n=k=>st.filter(x=>x.k===k).length;
+  $('ctlNote').textContent=!fresh?'A Pi most nem válaszol, a kapcsolók nem használhatók.':C.zarolva?'A vezérlés zárolva van túl sok hibás PIN miatt.':!C.pin_van?'A Pi-n nincs PIN beállítva.':'';
+  const dis=ctlDis(), orphan=ids.filter(id=>!A.find(x=>x.id===id));
+  $('ctl').innerHTML=`<div class="ctlsum"><div class="t"><b>${ids.length} bot: ${n('run')} kereskedik, ${n('pause')} szünetel${n('down')?', '+n('down')+' nem fut':''}</b><div class="note">A kapcsoló minden fiók kártyája alatt van. Kikapcsolva a bot nem nyit új pozíciót, a nyitottakat tovább kezeli.</div></div>${ids.length>1?`<button class="btn" type="button" id="allOff" ${dis}>Mind szünet</button><button class="btn" type="button" id="allOn" ${dis}>Mind kereskedjen</button>`:''}</div>`
+    +orphan.map(id=>{ const s=botSt(id); return `<div class="bstrip ${s.k}"><div class="bs"><b><i></i>${esc(id)}: ${s.t.toLowerCase()}</b><span>${s.d}, a fiók nincs a listában</span></div>${swBtn(id,s)}</div>`; }).join('');
+  const f=$('allOff'), o=$('allOn'); if(f) f.onclick=()=>askPin('*',false); if(o) o.onclick=()=>askPin('*',true);
 }
+document.addEventListener('click',ev=>{ const e=ev.target.closest&&ev.target.closest('.sw'); if(e&&!e.disabled){ ev.stopPropagation(); askPin(e.dataset.id,e.dataset.on!=='1'); } });
 async function loadCtl(){ try{ const r=await fetch((/[?&]local=1/.test(location.search)?'control.json':CTL_URL)+'?t='+Date.now(),{cache:'no-store'}); if(r.ok){ S.ctl=await r.json(); return true; } }catch(e){} return false; }
 function askPin(id,trade){ const a=accts().find(x=>x.id===id), nm=id==='*'?'Minden bot':(a?a.ceg+' '+a.csomag:id);
   $('pinT').textContent=trade?'Kereskedés bekapcsolása':'Szüneteltetés'; $('pinD').textContent=nm+(trade?': a bot újra nyithat pozíciót.':': a bot nem nyit új pozíciót, a nyitottakat tovább kezeli.');
@@ -508,7 +517,7 @@ async function load(){
 })();
 matchMedia('(max-width:720px)').addEventListener('change',()=>{ if(S.data) renderOrbit(); });
 window.__fmt={usd,sgn,esc}; window.__pick=(id,sc)=>pick(id,sc); window.__fleetReady=()=>{ if(S.data) renderOrbit(); };
-load(); setInterval(load,60000); setInterval(async()=>{ if(!S.busy&&!document.hidden&&S.data&&await loadCtl()){ renderCtl(); } },15000);
+load(); setInterval(load,60000); setInterval(async()=>{ if(!S.busy&&!document.hidden&&S.data&&await loadCtl()){ renderCtl(); renderCards(); } },15000);
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
