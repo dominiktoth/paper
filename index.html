@@ -3,160 +3,177 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Számlák</title>
+<title>Számla-flotta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600;700&display=swap">
 <style>
-/* 2026-11-13 (user): számla-kártyák cégenként, kattintásra naptár; kifizethetőség jelzése; költés és kifizetés összesítve.
-   Szín-szerep (a korábbi oldalról, validált paletta): eval = indigó, funded = zöldeskék, kifizetés = arany, padló / bukás = piros. */
+/* 2026-11-13 v2 (user: „ultrafuturisztikus”): flotta-vezérlő. Mélyűr-háttér csillagmezővel, a számlák egy pályarendszeren keringenek a mérleg körül,
+   a kártyák letört sarkú holo-panelek gyűrűs műszerrel. Csak sötét. Szerepek: eval = ion-ibolya, funded = plazma-cián, kifizetés = arany, veszteség / padló = rózsavörös, nyereség = menta. */
 :root{
-  --bg:#E9EEF0; --surface:#F7F9FA; --surface-2:#EEF2F4; --ink:#12202B; --muted:#55687A; --line:#D3DCE2; --line-2:#B9C6CF;
-  --eval:#3F55C6; --funded:#0B8467; --gold:#8A6510; --gold-fill:#BE8F1F; --floor:#B4382A;
-  --pos:#0A7258; --neg:#A5322A;
-  --eval-bg:#E2E6F7; --funded-bg:#DAEFE8; --gold-bg:#F4EBD3; --floor-bg:#F5E0DC;
-  color-scheme:light;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0E1620; --surface:#16212C; --surface-2:#1C2935; --ink:#E3EAEF; --muted:#93A4B1; --line:#273746; --line-2:#3A5064;
-    --eval:#8C9AF0; --funded:#3DB992; --gold:#D9AE55; --gold-fill:#B98C2E; --floor:#E0685E;
-    --pos:#4FC7A0; --neg:#F08378;
-    --eval-bg:#1E2747; --funded-bg:#12302A; --gold-bg:#33291A; --floor-bg:#3A1F1E;
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0E1620; --surface:#16212C; --surface-2:#1C2935; --ink:#E3EAEF; --muted:#93A4B1; --line:#273746; --line-2:#3A5064;
-  --eval:#8C9AF0; --funded:#3DB992; --gold:#D9AE55; --gold-fill:#B98C2E; --floor:#E0685E;
-  --pos:#4FC7A0; --neg:#F08378;
-  --eval-bg:#1E2747; --funded-bg:#12302A; --gold-bg:#33291A; --floor-bg:#3A1F1E;
+  --void:#04060F; --deep:#080C1E; --panel:#0B1228; --panel-2:#101A38; --ink:#DCE8FF; --muted:#8493BD; --line:#1C2850; --line-2:#2D3E78;
+  --eval:#9B7BFF; --funded:#3DF2FF; --gold:#FFC94A; --floor:#FF5C8A; --pos:#4DFFC0; --neg:#FF6B94;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:400 15px/1.55 "Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1240px;margin:0 auto;padding:28px 16px 72px;display:flex;flex-direction:column;gap:26px}
-a{color:inherit}
-button{font:inherit;color:inherit;cursor:pointer}
-:focus-visible{outline:2px solid var(--eval);outline-offset:2px;border-radius:8px}
+body{background:var(--void);color:var(--ink);font:400 15px/1.55 "Exo 2",system-ui,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(1100px 620px at 78% -8%,rgba(61,242,255,.13),transparent 62%),radial-gradient(900px 600px at 6% 12%,rgba(155,123,255,.16),transparent 60%),linear-gradient(180deg,#04060F,#070A1A 55%,#04060F)}
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.wrap{max-width:1280px;margin:0 auto;padding:22px 16px 80px;display:flex;flex-direction:column;gap:26px}
+a{color:inherit} button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--funded);outline-offset:3px}
 .pos{color:var(--pos)} .neg{color:var(--neg)} .muted{color:var(--muted)}
-h1,h2,h3{font-stretch:116%;letter-spacing:-.012em;margin:0}
+h1,h2,h3,.dsp{font-family:"Chakra Petch","Exo 2",sans-serif;margin:0;letter-spacing:.01em}
 
-.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
-.top h1{font-size:30px;line-height:1.1;font-weight:760}
-.top .lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
-.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tools .upd{color:var(--muted);font-size:13px;margin-right:6px}
-.btn{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
-.btn:hover{border-color:var(--line-2)}
-.err{background:var(--floor-bg);color:var(--neg);border-radius:12px;padding:12px 14px}
+/* fejléc */
+.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px}
+.brand .mark{width:38px;height:38px;flex:none}
+.top h1{font-size:26px;font-weight:700;line-height:1}
+.top .lede{margin:3px 0 0;color:var(--muted);font-size:14px}
+.tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tools .upd{color:var(--muted);font-size:13px;display:inline-flex;align-items:center;gap:8px}
+.tools .upd i{width:8px;height:8px;border-radius:50%;background:var(--pos);box-shadow:0 0 10px var(--pos)}
+.tools .upd.stale i{background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.btn{background:rgba(16,26,56,.7);border:1px solid var(--line-2);padding:7px 16px;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);font-family:"Chakra Petch",sans-serif;font-weight:500}
+.btn:hover{border-color:var(--funded);color:var(--funded)}
+.err{background:rgba(255,92,138,.12);border:1px solid var(--floor);color:var(--neg);padding:12px 14px}
 
-/* összesítő */
-.sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.sum>div{padding:16px 20px;border-left:1px solid var(--line);min-width:0}
-.sum>div:first-child{border-left:0}
-.sum .k{font-size:13px;color:var(--muted)}
-.sum .v{font-size:28px;line-height:1.15;font-weight:720;font-stretch:112%}
-.sum .s{font-size:13px;color:var(--muted)}
+/* hős: pályarendszer */
+.hero{position:relative;border:1px solid var(--line);background:linear-gradient(180deg,rgba(11,18,40,.55),rgba(4,6,15,.2));overflow:hidden;clip-path:polygon(22px 0,100% 0,100% calc(100% - 22px),calc(100% - 22px) 100%,0 100%,0 22px)}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;pointer-events:none;opacity:.5;
+  background:linear-gradient(transparent,rgba(4,6,15,.0)),repeating-linear-gradient(90deg,rgba(61,242,255,.16) 0 1px,transparent 1px 64px),repeating-linear-gradient(0deg,rgba(61,242,255,.16) 0 1px,transparent 1px 32px);
+  transform:perspective(520px) rotateX(62deg) scale(1.9);transform-origin:50% 100%;mask-image:linear-gradient(transparent,#000 70%);-webkit-mask-image:linear-gradient(transparent,#000 70%)}
+#orbit{display:block;width:100%;height:auto;position:relative;z-index:1}
+#orbit .node{cursor:pointer}
+#orbit .node:focus-visible{outline:none}
+#orbit .node:focus-visible .halo{stroke:#fff;stroke-width:2}
+#orbit text{font-family:"Chakra Petch",sans-serif;fill:var(--ink);paint-order:stroke;stroke:#060918;stroke-width:5px;stroke-linejoin:round}
+.hud{position:absolute;z-index:2;display:flex;flex-direction:column;gap:1px;min-width:150px}
+.hud .k{font-size:12.5px;color:var(--muted)}
+.hud .v{font-family:"Chakra Petch",sans-serif;font-size:27px;font-weight:600;line-height:1.1}
+.hud .s{font-size:12.5px;color:var(--muted)}
+.hud::before{content:"";width:34px;height:2px;background:var(--c,var(--funded));box-shadow:0 0 12px var(--c,var(--funded));margin-bottom:8px}
+.hud.tl{left:26px;top:22px} .hud.tr{right:26px;top:22px;text-align:right;align-items:flex-end} .hud.bl{left:26px;bottom:20px} .hud.br{right:26px;bottom:20px;text-align:right;align-items:flex-end}
 
 /* kifizethető sáv */
-.paybar{background:var(--gold-bg);border:1px solid var(--gold-fill);border-radius:14px;padding:14px 18px;display:flex;gap:10px 18px;align-items:center;flex-wrap:wrap}
-.paybar b{font-weight:720}
-.paybar .coin{width:14px;height:14px;border-radius:50%;background:var(--gold-fill);flex:none}
-.paybar button{margin-left:auto;background:transparent;border:1px solid var(--gold-fill);border-radius:999px;padding:5px 12px;font-size:14px}
+.paybar{position:relative;border:1px solid var(--gold);background:linear-gradient(90deg,rgba(255,201,74,.16),rgba(255,201,74,.04));padding:13px 18px;display:flex;gap:10px 18px;align-items:center;flex-wrap:wrap;clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.paybar b{font-family:"Chakra Petch",sans-serif;font-weight:600;color:var(--gold)}
+.paybar .coin{width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 14px var(--gold);flex:none;animation:pulse 1.8s ease-in-out infinite}
+.paybar button{margin-left:auto;background:transparent;border:1px solid var(--gold);color:var(--gold);padding:5px 14px;font-size:14px;font-family:"Chakra Petch",sans-serif}
+@keyframes pulse{50%{opacity:.35}}
 
 /* kártyák */
 .sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
-.sec-h h2{font-size:20px;font-weight:720}
+.sec-h h2{font-size:19px;font-weight:600;display:flex;align-items:center;gap:10px}
+.sec-h h2::before{content:"";width:10px;height:10px;background:var(--funded);box-shadow:0 0 12px var(--funded);transform:rotate(45deg)}
 .sec-h small{color:var(--muted);font-size:13px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-.card{--ph:var(--eval);--ph-bg:var(--eval-bg);text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px 14px;display:flex;flex-direction:column;gap:10px;min-width:0;position:relative}
-.card.funded,.card.live{--ph:var(--funded);--ph-bg:var(--funded-bg)}
-.card:hover{border-color:var(--line-2)}
-.card[aria-pressed="true"]{border-color:var(--ph);box-shadow:0 0 0 1px var(--ph)}
-.card.off{opacity:.78}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+.cw{--ph:var(--eval);min-width:0;filter:drop-shadow(0 0 0 transparent);transition:filter .2s}
+.cw.funded,.cw.live{--ph:var(--funded)} .cw.bust{--ph:var(--floor)} .cw.done{--ph:var(--line-2)} .cw.pay{--ph2:var(--gold)}
+.cw:hover{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--ph) 45%,transparent))}
+.cw.on{filter:drop-shadow(0 0 20px color-mix(in srgb,var(--ph) 70%,transparent))}
+.cw.pay{filter:drop-shadow(0 0 16px rgba(255,201,74,.55))}
+.card{--cut:18px;position:relative;width:100%;text-align:left;border:0;padding:18px 18px 14px;display:flex;flex-direction:column;gap:12px;
+  background:linear-gradient(135deg,var(--ph),color-mix(in srgb,var(--ph) 18%,var(--line)) 38%,var(--line) 62%,color-mix(in srgb,var(--ph2,var(--ph)) 70%,var(--line)));
+  clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
+.card::before{content:"";position:absolute;inset:1px;background:linear-gradient(160deg,rgba(16,26,56,.97),rgba(8,12,30,.98));clip-path:polygon(calc(var(--cut) - .5px) 0,100% 0,100% calc(100% - var(--cut) + .5px),calc(100% - var(--cut) + .5px) 100%,0 100%,0 calc(var(--cut) - .5px))}
+.card::after{content:"";position:absolute;inset:1px;pointer-events:none;opacity:.35;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 4px)}
+.card>*{position:relative;z-index:1}
+.cw.off .card{opacity:.8}
 .card .hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.card .firm{font-weight:720;font-stretch:112%;font-size:17px;line-height:1.2}
+.card .firm{font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:18px;line-height:1.2}
 .card .plan{color:var(--muted);font-size:13.5px}
-.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:640;background:var(--ph-bg);color:var(--ph);white-space:nowrap}
-.chip.bust{background:var(--floor-bg);color:var(--floor)} .chip.done{background:var(--surface-2);color:var(--muted)}
-.card .bal{font-size:32px;line-height:1.05;font-weight:720;font-stretch:114%}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:2px 10px 2px 8px;font-size:12.5px;font-weight:600;font-family:"Chakra Petch",sans-serif;color:var(--ph);border:1px solid color-mix(in srgb,var(--ph) 55%,transparent);background:color-mix(in srgb,var(--ph) 12%,transparent);white-space:nowrap}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ph);box-shadow:0 0 8px var(--ph)}
+.chip.bust{--ph:var(--floor)} .chip.done{--ph:var(--muted)}
+.core{display:grid;grid-template-columns:132px minmax(0,1fr);gap:14px;align-items:center}
+.gauge{width:132px;height:132px}
+.gauge text{font-family:"Chakra Petch",sans-serif}
+.card .bal{font-family:"Chakra Petch",sans-serif;font-size:31px;line-height:1.05;font-weight:600;white-space:nowrap}
 .card .sub{font-size:13.5px;color:var(--muted)}
-.meter{position:relative;height:10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);margin:14px 0 2px}
-.meter .fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--ph)}
-.meter .tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--line-2)}
-.meter .tick.goal{background:var(--ph)}
-.mlab{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
-.mlab .fl{color:var(--floor)}
-.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 12px}
-.kv>span{display:flex;flex-direction:column;min-width:0} .kv .k{font-size:12px;color:var(--muted)} .kv .v{font-weight:640}
-.card .ft{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;flex-wrap:wrap}
-.payflag{display:flex;align-items:center;gap:8px;background:var(--gold-bg);color:var(--gold);border-radius:10px;padding:6px 10px;font-size:13.5px;font-weight:640}
-.payflag i{width:10px;height:10px;border-radius:50%;background:var(--gold-fill);flex:none}
-.payflag.wait{background:var(--surface-2);color:var(--muted);font-weight:500} .payflag.wait i{background:var(--line-2)}
+.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 12px;border-top:1px solid var(--line);padding-top:10px}
+.kv>span{display:flex;flex-direction:column;min-width:0} .kv .k{font-size:12px;color:var(--muted)} .kv .v{font-weight:600;font-family:"Chakra Petch",sans-serif}
+.card .ft{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.payflag{display:flex;align-items:center;gap:9px;border:1px solid var(--gold);background:rgba(255,201,74,.1);color:var(--gold);padding:6px 10px;font-size:13.5px;font-weight:600}
+.payflag i{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--gold);flex:none;animation:pulse 1.8s ease-in-out infinite}
+.payflag.wait{border-color:var(--line-2);background:rgba(45,62,120,.18);color:var(--muted);font-weight:500} .payflag.wait i{background:var(--line-2);box-shadow:none;animation:none}
 
 /* részletek */
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px;min-width:0}
-.panel h3{margin:0 0 14px;font-size:18px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
-.panel h3 small{font-size:13px;font-weight:400;font-stretch:100%;color:var(--muted)}
+.panel{position:relative;background:linear-gradient(160deg,rgba(16,26,56,.82),rgba(8,12,30,.86));border:1px solid var(--line);padding:20px 22px;min-width:0;clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+.panel::before{content:"";position:absolute;left:0;top:0;width:54px;height:2px;background:var(--ph,var(--funded));box-shadow:0 0 12px var(--ph,var(--funded))}
+.panel h3{margin:0 0 14px;font-size:17px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.panel h3 small{font-size:13px;font-weight:400;font-family:"Exo 2",sans-serif;color:var(--muted)}
+#detail{--ph:var(--eval)} #detail.funded,#detail.live{--ph:var(--funded)}
 .dhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
-.dhead h2{font-size:26px;font-weight:760}
+.dhead h2{font-size:27px;font-weight:700}
 .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0}
 .kpis div{padding:2px 14px;border-left:1px solid var(--line);min-width:0} .kpis div:first-child{padding-left:0;border-left:0}
-.kpis b{display:block;font-size:21px;font-weight:720;font-stretch:112%} .kpis span{font-size:12.5px;color:var(--muted)}
+.kpis b{display:block;font-family:"Chakra Petch",sans-serif;font-size:21px;font-weight:600} .kpis span{font-size:12.5px;color:var(--muted)}
 .grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
 .side{display:flex;flex-direction:column;gap:20px;min-width:0}
 .calnav{display:flex;align-items:center;gap:8px}
-.calnav button{background:var(--surface-2);border:1px solid var(--line);border-radius:999px;width:32px;height:32px}
+.calnav button{background:transparent;border:1px solid var(--line-2);width:32px;height:32px;color:var(--funded)}
+.calnav button:hover{border-color:var(--funded)}
 .cal{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,.9fr);gap:6px}
-.cal .h{font-size:12px;color:var(--muted);text-align:left;padding:0 4px}
-.cal .d{min-height:74px;border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column;justify-content:space-between;gap:2px;min-width:0;background:var(--surface)}
-.cal .d.out{opacity:.35}
+.cal .h{font-size:12px;color:var(--muted);padding:0 4px}
+.cal .d{--a:0;min-height:76px;border:1px solid var(--line);padding:6px 8px;display:flex;flex-direction:column;justify-content:space-between;gap:2px;min-width:0;background:rgba(8,12,30,.6);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.cal .d.out{opacity:.3}
 .cal .d.has{cursor:pointer}
-.cal .d.w{background:var(--funded-bg);border-color:transparent} .cal .d.l{background:var(--floor-bg);border-color:transparent}
-.cal .d.sel{box-shadow:0 0 0 2px var(--ink)}
-.cal .d.today .dn{font-weight:800;color:var(--ink)}
-.cal .d.wk{background:var(--surface-2);border-style:dashed}
+.cal .d.w{border-color:color-mix(in srgb,var(--pos) calc(35% + var(--a)*65%),var(--line));background:color-mix(in srgb,var(--pos) calc(7% + var(--a)*26%),rgba(8,12,30,.7))}
+.cal .d.l{border-color:color-mix(in srgb,var(--neg) calc(35% + var(--a)*65%),var(--line));background:color-mix(in srgb,var(--neg) calc(7% + var(--a)*26%),rgba(8,12,30,.7))}
+.cal .d.sel{outline:2px solid var(--ink);outline-offset:-2px}
+.cal .d.today .dn{color:var(--funded);font-weight:700}
+.cal .d.wk{background:rgba(16,26,56,.5);border-style:dashed}
 .cal .dn{font-size:12px;color:var(--muted)}
-.cal .pl{font-weight:680;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .cal .nt{font-size:11.5px;color:var(--muted)}
-.cal .evb{align-self:flex-start;font-size:11px;font-weight:640;border-radius:999px;padding:0 7px;background:var(--gold-bg);color:var(--gold)}
+.cal .pl{font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .cal .nt{font-size:11.5px;color:var(--muted)}
+.cal .evb{align-self:flex-start;font-size:11px;font-weight:600;padding:0 6px;border:1px solid var(--gold);color:var(--gold)}
 .msum{margin:12px 0 0;font-size:14px;color:var(--muted)}
-.check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.check li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:14px;align-items:start}
-.check .m{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font-size:12px;font-weight:800;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
-.check .ok .m{background:var(--funded-bg);color:var(--funded);border-color:transparent}
+.check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.check li{display:grid;grid-template-columns:22px 1fr;gap:9px;font-size:14px;align-items:start}
+.check .m{width:20px;height:20px;display:inline-grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--line-2);transform:rotate(45deg)} .check .m span{transform:rotate(-45deg)}
+.check .ok .m{color:var(--pos);border-color:var(--pos);box-shadow:0 0 10px rgba(77,255,192,.4)}
 .ledger{width:100%;border-collapse:collapse;font-size:14px}
-.ledger td{padding:6px 0;border-top:1px solid var(--line)} .ledger tr:first-child td{border-top:0}
-.ledger td:last-child{text-align:right;font-weight:640;white-space:nowrap}
-.ledger .tot td{border-top:2px solid var(--line-2);font-weight:720}
+.ledger td{padding:7px 0;border-top:1px solid var(--line)} .ledger tr:first-child td{border-top:0}
+.ledger td:last-child{text-align:right;font-weight:600;white-space:nowrap;font-family:"Chakra Petch",sans-serif}
+.ledger .tot td{border-top:1px solid var(--line-2);font-weight:600}
 .tblwrap{overflow-x:auto}
 table.tr{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
-table.tr th{text-align:left;font-weight:500;color:var(--muted);font-size:12.5px;padding:6px 10px 6px 0;border-bottom:1px solid var(--line)}
-table.tr td{padding:6px 10px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+table.tr th{text-align:left;font-weight:500;color:var(--muted);font-size:12.5px;padding:6px 10px 6px 0;border-bottom:1px solid var(--line-2)}
+table.tr td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line);white-space:nowrap}
 table.tr td.r,table.tr th.r{text-align:right;padding-right:0}
+table.tr td.r{font-family:"Chakra Petch",sans-serif}
 .empty{color:var(--muted);font-size:14px;padding:8px 0}
 .note{font-size:13px;color:var(--muted);max-width:90ch}
 
 @media (max-width:900px){ .grid{grid-template-columns:1fr} .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 0} .kpis div:nth-child(4){padding-left:0;border-left:0} }
-@media (max-width:640px){
-  .sum{grid-template-columns:repeat(2,minmax(0,1fr))} .sum>div:nth-child(3){border-left:0} .sum>div:nth-child(n+3){border-top:1px solid var(--line)}
-  .sum .v{font-size:23px} .top h1{font-size:26px} .cal{gap:4px} .cal .d{min-height:62px;padding:5px 5px} .cal .pl{font-size:12px} .cal .nt{display:none}
-  .panel{padding:16px 14px}
+@media (max-width:720px){
+  .hud{position:static;min-width:0} .hud.tr,.hud.br{text-align:left;align-items:flex-start}
+  .huds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px;padding:4px 18px 20px;position:relative;z-index:2}
+  .hud .v{font-size:22px} .hero::after{display:none}
+  .kpis b{font-size:17px} .kpis div{padding:2px 8px} .dhead h2{font-size:22px}
+  .top h1{font-size:22px} .cal{gap:4px} .cal .d{min-height:62px;padding:5px} .cal .pl{font-size:12px} .cal .nt{display:none} .panel{padding:16px 14px}
+  .cards{grid-template-columns:1fr} .core{grid-template-columns:112px minmax(0,1fr)} .gauge{width:112px;height:112px} .card .bal{font-size:26px}
 }
+@media (prefers-reduced-motion: reduce){ .paybar .coin,.payflag i{animation:none} }
 </style>
 </head>
 <body>
+<canvas id="stars" aria-hidden="true"></canvas>
 <div class="wrap">
   <header class="top">
-    <div>
-      <h1>Számlák</h1>
-      <p class="lede">A megvett prop-fiókok állapota, napi eredménye, a kifizetések és az eddigi költés.</p>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="20" rx="18" ry="7" fill="none" stroke="#3DF2FF" stroke-width="1.4" transform="rotate(-24 20 20)"/><ellipse cx="20" cy="20" rx="18" ry="7" fill="none" stroke="#9B7BFF" stroke-width="1.4" transform="rotate(38 20 20)"/><circle cx="20" cy="20" r="4.5" fill="#FFC94A"/></svg>
+      <div><h1>Számla-flotta</h1><p class="lede">A prop-fiókok állapota, napi eredménye, kifizetései és az eddigi költés.</p></div>
     </div>
-    <div class="tools"><span class="upd" id="upd"></span><a class="btn" href="botok">Papír-botok</a><button class="btn" id="theme" type="button" aria-label="Világos / sötét téma">Téma</button></div>
+    <div class="tools"><span class="upd" id="upd"></span><a class="btn" href="botok">Papír-botok</a></div>
   </header>
   <div id="err"></div>
-  <section class="sum" id="sum" aria-label="Összesítés"></section>
+  <section class="hero" aria-label="A flotta áttekintése">
+    <svg id="orbit" viewBox="0 0 1000 400" role="group" aria-label="A számlák a mérleg körül keringenek; egy számlára kattintva megnyílnak a részletei"></svg>
+    <div class="huds" id="huds"></div>
+  </section>
   <div id="paybar"></div>
   <section>
     <div class="sec-h"><h2>Aktív számlák</h2><small id="actNote"></small></div>
@@ -186,64 +203,108 @@ const dLabel=iso=>new Date(iso+'T12:00:00').toLocaleDateString('hu-HU',{year:'nu
 function accts(){return S.data?S.data.szamlak:[];}
 function sel(){return accts().find(a=>a.id===S.sel);}
 
+function phCls(a){ return a.allapot==='bukott'?'bust':a.allapot!=='aktív'?'done':a.fazis; }
 function chip(a){
   if(a.allapot==='bukott') return '<span class="chip bust">Bukott</span>';
   if(a.allapot==='passzolt') return '<span class="chip done">Passzolt</span>';
   if(a.allapot!=='aktív') return `<span class="chip done">${esc(a.allapot)}</span>`;
   return `<span class="chip">${PH[a.fazis]||esc(a.fazis)}</span>`;
 }
-function meter(a){
-  if(a.padlo==null) return '';
-  const lo=a.padlo, goal=a.fazis==='eval'&&a.cel?a.kezdo+a.cel:null, hi=goal!=null?goal:Math.max(a.egyenleg,a.kezdo+(a.mll||1000))*1+0, span=Math.max(hi-lo,1);
-  const pc=v=>Math.max(0,Math.min(100,(v-lo)/span*100));
-  return `<div><div class="meter" role="img" aria-label="Egyenleg a padló és a ${goal!=null?'cél':'felső sáv'} között: ${usd(a.egyenleg)}"><span class="fill" style="width:${pc(a.egyenleg)}%"></span><span class="tick" style="left:${pc(a.kezdo)}%" title="Kezdő egyenleg"></span></div>
-    <div class="mlab"><span class="fl">padló ${usd(lo)}</span><span>${goal!=null?'cél '+usd(goal):'kezdő '+usd(a.kezdo)}</span></div></div>`;
+// gyűrűs műszer: 270°-os ív a padlótól a célig (funded: a padlótól a felső sávig); jel a kezdő egyenlegnél
+function gauge(a){
+  const act=a.allapot==='aktív', R=52, C=66, A0=135, SW=270, pt=(deg,r)=>{const t=deg*Math.PI/180; return [C+r*Math.cos(t),C+r*Math.sin(t)];};
+  const arc=(f0,f1,r)=>{const [x0,y0]=pt(A0+SW*f0,r),[x1,y1]=pt(A0+SW*f1,r); return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${SW*(f1-f0)>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;};
+  let f=0,fs=null,big='–',small='';
+  if(a.padlo!=null){ const lo=a.padlo, goal=a.fazis==='eval'&&a.cel?a.kezdo+a.cel:null, hi=goal!=null?goal:Math.max(a.egyenleg,a.kezdo+(a.mll||1000)); const span=Math.max(hi-lo,1); f=Math.max(0,Math.min(1,(a.egyenleg-lo)/span)); fs=Math.max(0,Math.min(1,(a.kezdo-lo)/span)); }
+  if(!act){ big=a.allapot==='bukott'?'✕':'✓'; small=a.allapot; f=a.allapot==='bukott'?0:1; }
+  else if(a.fazis==='eval'&&a.cel){ big=Math.max(0,Math.round((a.egyenleg-a.kezdo)/a.cel*100))+' %'; small='a célból'; }
+  else { big=usd(a.parna); small='párna'; }
+  const ticks=Array.from({length:28},(_,i)=>{const d=A0+SW*i/27,[x0,y0]=pt(d,61),[x1,y1]=pt(d,i%9===0?66:64); return `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="var(--line-2)" stroke-width="1"/>`;}).join('');
+  let st=''; if(fs!=null&&act){ const [x0,y0]=pt(A0+SW*fs,45),[x1,y1]=pt(A0+SW*fs,59); st=`<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="var(--ink)" stroke-width="1.5"><title>Kezdő egyenleg</title></line>`; }
+  const [hx,hy]=pt(A0+SW*f,R);
+  return `<svg class="gauge" viewBox="0 0 132 132" role="img" aria-label="${act?(a.fazis==='eval'?'A cél '+big+'-a megvan':'Párna '+big):esc(a.allapot)}">
+    ${ticks}<path d="${arc(0,1,R)}" fill="none" stroke="var(--line)" stroke-width="7"/>
+    ${f>0.004?`<path d="${arc(0,f,R)}" fill="none" stroke="var(--ph)" stroke-width="7" style="filter:drop-shadow(0 0 5px var(--ph))"/>`:''}
+    ${act?`<circle cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="5" fill="var(--void)" stroke="var(--ph)" stroke-width="2.5"/>`:''}${st}
+    <text x="66" y="${small?66:72}" text-anchor="middle" font-size="${String(big).length>6?17:22}" font-weight="600" fill="var(--ink)">${big}</text>
+    ${small?`<text x="66" y="84" text-anchor="middle" font-size="11.5" fill="var(--muted)" style="font-family:'Exo 2',sans-serif">${esc(small)}</text>`:''}
+  </svg>`;
 }
 function payFlag(a){
   const k=a.kifizetheto; if(!k) return '';
-  if(k.lehet) return `<div class="payflag"><i></i>Kifizetés kérhető: ${usd(k.osszeg)} (neked ${usd(k.kapnal)})</div>`;
+  if(k.lehet) return `<div class="payflag"><i></i>Kifizetés kérhető: ${usd(k.osszeg)}, ebből neked ${usd(k.kapnal)}</div>`;
   const ok=k.feltetelek.filter(f=>f.ok).length; return `<div class="payflag wait"><i></i>Kifizetéshez ${ok} / ${k.feltetelek.length} feltétel megvan</div>`;
 }
 function card(a){
-  const on=S.sel===a.id, act=a.allapot==='aktív';
+  const on=S.sel===a.id, act=a.allapot==='aktív', pay=a.kifizetheto&&a.kifizetheto.lehet;
   const kv=a.fazis==='eval'&&act
     ? [['Célig',usd(a.cel_hatra)],['Párna',usd(a.parna)],['Ma',`<span class="${cls(a.ma)}">${sgn(a.ma)}</span>`]]
     : [['Párna',act?usd(a.parna):'–'],['Kifizetve',usd(a.kapott)],['Ma',act?`<span class="${cls(a.ma)}">${sgn(a.ma)}</span>`:'–']];
-  return `<button type="button" class="card ${esc(a.fazis)} ${act?'':'off'}" aria-pressed="${on}" data-id="${esc(a.id)}">
-    <div class="hd"><div><div class="firm">${esc(a.ceg)}</div><div class="plan">${esc(a.csomag)} · ${esc(short(a.id))}</div></div>${chip(a)}</div>
-    <div><div class="bal">${usd(a.egyenleg)}</div><div class="sub">Eredmény <b class="${cls(a.pnl)}">${sgn(a.pnl)}</b>${a.nyitott?` · ${a.nyitott} nyitott pozíció`:''}</div></div>
-    ${act?meter(a):''}
+  return `<div class="cw ${phCls(a)} ${on?'on':''} ${act?'':'off'} ${pay?'pay':''}"><button type="button" class="card" aria-pressed="${on}" data-id="${esc(a.id)}">
+    <div class="hd"><div><div class="firm">${esc(a.ceg)}</div><div class="plan">${esc(a.csomag)}, ${esc(short(a.id))}</div></div>${chip(a)}</div>
+    <div class="core">${gauge(a)}<div><div class="bal">${usd(a.egyenleg)}</div><div class="sub">Eredmény <b class="${cls(a.pnl)}">${sgn(a.pnl)}</b></div>${act&&a.padlo!=null?`<div class="sub">Padló <span class="neg">${usd(a.padlo)}</span>${a.fazis==='eval'&&a.cel?`, cél ${usd(a.kezdo+a.cel)}`:''}</div>`:''}${a.nyitott?`<div class="sub">${a.nyitott} nyitott pozíció</div>`:''}</div></div>
     <div class="kv">${kv.map(([k,v])=>`<span><span class="k">${k}</span><span class="v">${v}</span></span>`).join('')}</div>
     ${payFlag(a)}
-    <div class="ft"><span>Ára ${a.ar_ismert?usd(a.koltes):'nincs megadva'}</span><span>${a.kifizetesek.length?a.kifizetesek.length+' kifizetés · '+usd(a.kapott):'még nincs kifizetés'}</span></div>
-  </button>`;
+    <div class="ft"><span>Ára ${a.ar_ismert?usd(a.koltes):'nincs megadva'}</span><span>${a.kifizetesek.length?a.kifizetesek.length+' kifizetés, '+usd(a.kapott):'még nincs kifizetés'}</span></div>
+  </button></div>`;
 }
+const ORB={t0:performance.now(),raf:0,nodes:[]};
 function renderSum(){
   const o=S.data.osszesen, A=accts();
-  $('sum').innerHTML=[
-    ['Elköltve',usd(o.koltes),`${A.length} fiók`+(o.ar_hianyzik.length?` · ${o.ar_hianyzik.length} ára hiányzik`:'')],
-    ['Kifizetve (neked)',usd(o.kapott),o.kifizetes_db?`${o.kifizetes_db} kifizetés`:'még nincs kifizetés'],
-    ['Mérleg',`<span class="${cls(o.netto)}">${sgn(o.netto)}</span>`,'kifizetés − költés'],
-    ['Aktív számlák',o.aktiv,`${o.aktiv-o.funded} eval · ${o.funded} funded`+(o.bukott?` · ${o.bukott} bukott`:'')]
-  ].map(([k,v,s])=>`<div><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+  $('huds').innerHTML=[
+    ['tl','--funded','Elköltve',usd(o.koltes),`${A.length} fiók`+(o.ar_hianyzik.length?`, ${o.ar_hianyzik.length} ára hiányzik`:'')],
+    ['tr','--gold','Kifizetve neked',usd(o.kapott),o.kifizetes_db?`${o.kifizetes_db} kifizetés`:'még nincs kifizetés'],
+    ['bl','--eval','Aktív számlák',o.aktiv,`${o.aktiv-o.funded} eval, ${o.funded} funded`+(o.bukott?`, ${o.bukott} bukott`:'')],
+    ['br','--gold','Most kérhető',usd(o.kifizetheto),o.kifizetheto>0?'kifizetés vár rád':'nincs kérhető kifizetés']
+  ].map(([p,c,k,v,s])=>`<div class="hud ${p}" style="--c:var(${c})"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
   const P=A.filter(a=>a.kifizetheto&&a.kifizetheto.lehet);
-  $('paybar').innerHTML=P.length?`<div class="paybar" role="status"><span class="coin"></span><span><b>Kifizetés kérhető</b> ${P.map(a=>`${esc(a.ceg)} ${esc(short(a.id))}: ${usd(a.kifizetheto.osszeg)}`).join(' · ')} — összesen neked <b>${usd(o.kifizetheto)}</b></span><button type="button" data-id="${esc(P[0].id)}">Megnézem</button></div>`:'';
+  $('paybar').innerHTML=P.length?`<div class="paybar" role="status"><span class="coin"></span><span><b>Kifizetés kérhető</b> ${P.map(a=>`${esc(a.ceg)} ${esc(short(a.id))}: ${usd(a.kifizetheto.osszeg)}`).join(', ')}. Összesen neked <b>${usd(o.kifizetheto)}</b>.</span><button type="button" data-id="${esc(P[0].id)}">Megnézem</button></div>`:'';
   const pb=$('paybar').querySelector('button'); if(pb) pb.onclick=()=>pick(pb.dataset.id,true);
+  renderOrbit();
+}
+// pályarendszer: középen a mérleg; belső pálya = funded, középső = eval, külső = lezárt fiókok. A bolygó színe a fázis, arany gyűrű = kérhető kifizetés.
+function renderOrbit(){
+  const o=S.data.osszesen, A=accts(), sv=$('orbit'), M=matchMedia('(max-width:720px)').matches, CX=500, CY=M?190:200, K=M?0.42:0.36;
+  const rings=M?[['funded',90,'var(--funded)'],['eval',150,'var(--eval)'],['off',198,'var(--muted)']]:[['funded',185,'var(--funded)'],['eval',305,'var(--eval)'],['off',425,'var(--muted)']];
+  sv.setAttribute('viewBox',M?'290 82 420 216':'0 0 1000 400'); ORB.M=M;
+  const grp={funded:[],eval:[],off:[]}; for(const a of A) grp[a.allapot!=='aktív'?'off':(a.fazis==='eval'?'eval':'funded')].push(a);
+  let h=`<defs><radialGradient id="gCore"><stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="${o.netto>=0?'#4DFFC0':'#FF6B94'}"/><stop offset="1" stop-color="${o.netto>=0?'#4DFFC0':'#FF6B94'}" stop-opacity="0"/></radialGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  for(const [k,r,c] of rings) h+=`<ellipse cx="${CX}" cy="${CY}" rx="${r}" ry="${(r*K).toFixed(1)}" fill="none" stroke="${c}" stroke-opacity="${grp[k].length?.7:.3}" stroke-width="1" stroke-dasharray="${k==='off'?'2 7':'none'}"/>`;
+  h+=`<circle cx="${CX}" cy="${CY}" r="58" fill="url(#gCore)" opacity=".55"/><circle cx="${CX}" cy="${CY}" r="9" fill="#fff" filter="url(#glow)"/>
+      <text x="${CX}" y="${CY-26}" text-anchor="middle" font-size="26" font-weight="600" fill="${o.netto>=0?'var(--pos)':'var(--neg)'}">${sgn(o.netto)}</text>
+      <text x="${CX}" y="${CY+36}" text-anchor="middle" font-size="12.5" style="font-family:'Exo 2',sans-serif;fill:var(--muted)">mérleg: kifizetés − költés</text>`;
+  ORB.nodes=[];
+  for(const [k,r,c] of rings) grp[k].forEach((a,i)=>{
+    const pay=a.kifizetheto&&a.kifizetheto.lehet, rad=k==='off'?5:9, col=a.allapot==='bukott'?'var(--floor)':c;
+    h+=`<g class="node" data-id="${esc(a.id)}" data-r="${r}" data-ph="${(i/grp[k].length*360+(k==='eval'?35:k==='off'?200:300)).toFixed(1)}" role="button" tabindex="0" aria-label="${esc(a.ceg)} ${esc(a.csomag)}, ${esc(short(a.id))}: ${usd(a.egyenleg)}">
+      ${pay?`<circle r="${rad+9}" fill="none" stroke="var(--gold)" stroke-width="1.5" filter="url(#glow)"/>`:''}
+      <circle class="halo" r="${rad+4}" fill="${col}" fill-opacity=".16" stroke="${S.sel===a.id?'#fff':'none'}"/>
+      <circle r="${rad}" fill="${col}" filter="url(#glow)"/>
+      ${k==='off'||M?'':`<text x="${rad+12}" y="-2" font-size="13.5" font-weight="600">${esc(a.ceg)}</text><text x="${rad+12}" y="15" font-size="12.5" style="font-family:'Exo 2',sans-serif;fill:var(--muted)">${PH[a.fazis]||''}, ${usd(a.egyenleg)}</text>`}
+    </g>`; });
+  sv.innerHTML=h;
+  sv.querySelectorAll('.node').forEach(g=>{ ORB.nodes.push({g,r:+g.dataset.r,ph:+g.dataset.ph}); const f=()=>pick(g.dataset.id,true); g.onclick=f; g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f();}}; });
+  const place=t=>{ for(const n of ORB.nodes){ const sp=n.r<(ORB.M?100:200)?5.2:n.r<(ORB.M?160:320)?3.4:1.6, ang=(n.ph+t*sp)*Math.PI/180, x=CX+n.r*Math.cos(ang), y=CY+n.r*K*Math.sin(ang); n.g.setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)})`); const tx=n.g.querySelectorAll('text'); const left=x>CX+230; tx.forEach(e=>{e.setAttribute('text-anchor',left?'end':'start'); e.setAttribute('x',left?-21:21);}); } };
+  cancelAnimationFrame(ORB.raf); const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const loop=now=>{ place((now-ORB.t0)/1000); if(!still&&!document.hidden) ORB.raf=requestAnimationFrame(loop); }; loop(performance.now());
+  if(!still) document.onvisibilitychange=()=>{ if(!document.hidden){ cancelAnimationFrame(ORB.raf); ORB.raf=requestAnimationFrame(loop); } };
 }
 function renderCards(){
   const A=accts(), act=A.filter(a=>a.allapot==='aktív'), cl=A.filter(a=>a.allapot!=='aktív');
   $('cards').innerHTML=act.length?act.map(card).join(''):'<div class="empty">Nincs aktív számla.</div>';
   $('actNote').textContent=act.length?'Kattints egy kártyára a naptárért és a részletekért.':'';
   $('closedSec').hidden=!cl.length; $('closed').innerHTML=cl.map(card).join('');
-  document.querySelectorAll('.card').forEach(el=>el.onclick=()=>pick(el.dataset.id));
+  document.querySelectorAll('.card').forEach(el=>el.onclick=()=>pick(el.dataset.id,true));
 }
-function pick(id,scroll){ S.sel=S.sel===id&&!scroll?null:id; S.month=null; S.day=null; try{history.replaceState(null,'',S.sel?'#'+encodeURIComponent(S.sel):location.pathname);}catch(e){} render(); if(S.sel&&scroll!==false) $('detail').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}); }
+function pick(id,scroll){ S.sel=(S.sel===id&&scroll==='close')?null:id; S.month=null; S.day=null; try{history.replaceState(null,'',S.sel?'#'+encodeURIComponent(S.sel):location.pathname);}catch(e){} render(); if(S.sel&&scroll===true) $('detail').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}); }
 
 function calHtml(a){
   const days=a.napok||{}, keys=Object.keys(days).sort(); if(!S.month) S.month=(keys.length?keys[keys.length-1]:todayNY()).slice(0,7);
   const [y,m]=S.month.split('-').map(Number), first=new Date(y,m-1,1), last=new Date(y,m,0), today=todayNY();
   const pay={}; for(const k of a.kifizetesek||[]) (pay[k.nap]=pay[k.nap]||[]).push(k);
   let start=new Date(first); start.setDate(start.getDate()-((start.getDay()+6)%7));
+  const mx=Math.max(1,...Object.values(days).map(v=>Math.abs(v.pnl)));
   let h=['H','K','Sze','Cs','P','Hét'].map(x=>`<div class="h">${x}</div>`).join(''), mT=0,mW=0,mL=0,mP=0;
   for(let d=new Date(start);;){
     let wk=0,wn=0;
@@ -251,7 +312,7 @@ function calHtml(a){
       const iso=new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10), inM=d.getMonth()===m-1, v=days[iso];
       if(v){wk+=v.pnl;wn+=v.n; if(inM){mT+=v.pnl; if(v.pnl>0)mW++; else if(v.pnl<0)mL++;}}
       if(inM) for(const k of pay[iso]||[]) mP+=k.kapott!=null?k.kapott:k.osszeg;
-      if(i<5) h+=`<div class="d ${v?(v.pnl>0?'w':v.pnl<0?'l':''):''} ${v?'has':''} ${inM?'':'out'} ${S.day===iso?'sel':''} ${iso===today?'today':''}" ${v?`data-d="${iso}" role="button" tabindex="0" aria-label="${dLabel(iso)}: ${sgn(v.pnl,1)}"`:''}><span class="dn">${d.getDate()}</span>${(pay[iso]||[]).map(k=>`<span class="evb">kifizetés ${usd(k.osszeg)}</span>`).join('')}${v?`<span><div class="pl ${cls(v.pnl)}">${sgn(v.pnl)}</div><div class="nt">${v.n} kötés</div></span>`:''}</div>`;
+      if(i<5) h+=`<div class="d ${v?(v.pnl>0?'w':v.pnl<0?'l':''):''} ${v?'has':''} ${inM?'':'out'} ${S.day===iso?'sel':''} ${iso===today?'today':''}" ${v?`style="--a:${(Math.abs(v.pnl)/mx).toFixed(2)}" data-d="${iso}" role="button" tabindex="0" aria-label="${dLabel(iso)}: ${sgn(v.pnl,1)}"`:''}><span class="dn">${d.getDate()}</span>${(pay[iso]||[]).map(k=>`<span class="evb">kifizetés ${usd(k.osszeg)}</span>`).join('')}${v?`<span><div class="pl ${cls(v.pnl)}">${sgn(v.pnl)}</div><div class="nt">${v.n} kötés</div></span>`:''}</div>`;
       d.setDate(d.getDate()+1);
     }
     h+=`<div class="d wk"><span class="dn">hét</span>${wn?`<span><div class="pl ${cls(wk)}">${sgn(wk)}</div><div class="nt">${wn} kötés</div></span>`:''}</div>`;
@@ -260,16 +321,16 @@ function calHtml(a){
   return {html:h,label:first.toLocaleDateString('hu-HU',{year:'numeric',month:'long'}),sum:`A hónap: <b class="${cls(mT)}">${sgn(mT)}</b>, ${mW} nyerő és ${mL} vesztes nap${mP?`; kifizetve <b>${usd(mP)}</b>`:''}.`};
 }
 function renderDetail(){
-  const a=sel(), el=$('detail'); if(!a){el.hidden=true;el.innerHTML='';return;} el.hidden=false;
+  const a=sel(), el=$('detail'); if(!a){el.hidden=true;el.innerHTML='';return;} el.hidden=false; el.className=phCls(a);
   const dv=Object.values(a.napok||{}), win=dv.filter(v=>v.pnl>0).length, best=dv.length?Math.max(...dv.map(v=>v.pnl)):null, worst=dv.length?Math.min(...dv.map(v=>v.pnl)):null, C=calHtml(a), k=a.kifizetheto;
   const kp=[['Egyenleg',usd(a.egyenleg,1),''],['Eredmény',sgn(a.pnl,1),cls(a.pnl)],[a.fazis==='eval'?'Célig':'Kifizetve',a.fazis==='eval'?usd(a.cel_hatra):usd(a.kapott),''],['Párna a padlóig',usd(a.parna),''],['Nyerő napok',dv.length?`${win} / ${dv.length}`:'–',''],['Legjobb / legrosszabb nap',dv.length?`${sgn(best)} / ${sgn(worst)}`:'–','']];
   const T=(a.tradek||[]).filter(t=>!S.day||t.nap===S.day).slice().reverse().slice(0,200);
   const tf=new Intl.DateTimeFormat('hu-HU',{timeZone:'America/New_York',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const led=[[`Vásárlás${a.vasarolva?' · '+a.vasarolva:''}`,a.ar_ismert?-a.ar:null],...(a.koltsegek||[]).map(c=>[`${esc(c.megj||'Költség')}${c.nap?' · '+c.nap:''}`,-c.osszeg]),...(a.kifizetesek||[]).map((p,i)=>[`${i+1}. kifizetés · ${p.nap}${p.becsult?' (becsült)':''}${p.kapott!=null&&p.kapott!==p.osszeg?` · kivéve ${usd(p.osszeg)}`:''}`,p.kapott!=null?p.kapott:p.osszeg])];
+  const led=[[`Vásárlás${a.vasarolva?', '+a.vasarolva:''}`,a.ar_ismert?-a.ar:null],...(a.koltsegek||[]).map(c=>[`${esc(c.megj||'Költség')}${c.nap?', '+c.nap:''}`,-c.osszeg]),...(a.kifizetesek||[]).map((p,i)=>[`${i+1}. kifizetés, ${p.nap}${p.becsult?' (becsült)':''}${p.kapott!=null&&p.kapott!==p.osszeg?`, kivéve ${usd(p.osszeg)}`:''}`,p.kapott!=null?p.kapott:p.osszeg])];
   const net=a.kapott-a.koltes;
   el.innerHTML=`
   <div class="panel" style="display:flex;flex-direction:column;gap:18px">
-    <div class="dhead"><div><h2>${esc(a.ceg)} · ${esc(a.csomag)}</h2><div class="muted">${esc(a.id)} · ${chip(a)}${a.vasarolva?' · vásárolva '+a.vasarolva:''}</div></div><button class="btn" type="button" id="closeD">Bezárás</button></div>
+    <div class="dhead"><div><h2>${esc(a.ceg)} ${esc(a.csomag)}</h2><div class="muted" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${chip(a)}<span>${esc(a.id)}</span>${a.vasarolva?'<span>vásárolva '+a.vasarolva+'</span>':''}</div></div><button class="btn" type="button" id="closeD">Bezárás</button></div>
     <div class="kpis">${kp.map(([l,v,c])=>`<div><span>${l}</span><b class="${c}">${v}</b></div>`).join('')}</div>
   </div>
   <div class="grid" style="margin-top:20px">
@@ -281,7 +342,7 @@ function renderDetail(){
     <div class="side">
       ${k?`<div class="panel"><h3><span>Kifizetés</span><small>${k.hanyadik?k.hanyadik+'. kifizetés':''}</small></h3>
         ${k.lehet?`<div class="payflag" style="margin-bottom:12px"><i></i>Most kérhető: ${usd(k.osszeg)}, ebből neked ${usd(k.kapnal)}</div>`:''}
-        <ul class="check">${k.feltetelek.map(f=>`<li class="${f.ok?'ok':''}"><span class="m">${f.ok?'✓':'·'}</span><span>${esc(f.szoveg)}</span></li>`).join('')}</ul></div>`
+        <ul class="check">${k.feltetelek.map(f=>`<li class="${f.ok?'ok':''}"><span class="m"><span>${f.ok?'✓':''}</span></span><span>${esc(f.szoveg)}</span></li>`).join('')}</ul></div>`
       :(a.fazis==='eval'&&a.allapot==='aktív'?`<div class="panel"><h3>Kifizetés</h3><div class="empty">Eval fázisban nincs kifizetés. A célig még ${usd(a.cel_hatra)} hiányzik.</div></div>`:'')}
       <div class="panel"><h3>Pénzügyek</h3><table class="ledger"><tbody>${led.map(([l,v])=>`<tr><td>${l}</td><td class="${v==null?'muted':cls(v)}">${v==null?'nincs megadva':sgn(v,1)}</td></tr>`).join('')}<tr class="tot"><td>Mérleg ezen a fiókon</td><td class="${cls(net)}">${sgn(net,1)}</td></tr></tbody></table></div>
       <div class="panel"><h3>Szabályok</h3><table class="ledger"><tbody>
@@ -290,30 +351,36 @@ function renderDetail(){
     </div>
   </div>
   <div class="panel" style="margin-top:20px">
-    <h3><span>Kötések${S.day?' · '+dLabel(S.day):''}</span><small>${S.day?'<a href="#" id="clrDay">minden nap</a>':`${a.trade_db} kötés összesen · a legutóbbiak`}</small></h3>
+    <h3><span>Kötések${S.day?', '+dLabel(S.day):''}</span><small>${S.day?'<a href="#" id="clrDay">minden nap</a>':`${a.trade_db} kötés összesen, a legutóbbiak elöl`}</small></h3>
     ${T.length?`<div class="tblwrap"><table class="tr"><thead><tr><th>Idő (New York)</th><th>Kontraktus</th><th>Oldal</th><th class="r">Db</th><th class="r">Ár</th><th class="r">Eredmény (díjjal)</th></tr></thead><tbody>${T.map(t=>`<tr><td>${t.t?tf.format(new Date(t.t.replace(/(\.\d{3})\d+/,'$1'))):esc(t.nap)}</td><td>${esc(t.k||'–')}</td><td>${t.o==='buy'?'vétel':t.o==='sell'?'eladás':'–'}</td><td class="r">${t.db==null?'–':t.db}</td><td class="r">${t.ar==null?'–':nf2.format(t.ar)}</td><td class="r ${cls(t.pnl)}">${sgn(t.pnl,1)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Még nincs kötés.</div>'}
   </div>`;
-  $('closeD').onclick=()=>pick(a.id);
+  $('closeD').onclick=()=>pick(a.id,'close');
   const step=n=>{const [y,m]=S.month.split('-').map(Number); const d=new Date(y,m-1+n,1); S.month=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); S.day=null; renderDetail();};
   $('mPrev').onclick=()=>step(-1); $('mNext').onclick=()=>step(1);
   $('cal').querySelectorAll('.d.has').forEach(e=>{const f=()=>{S.day=S.day===e.dataset.d?null:e.dataset.d;renderDetail();}; e.onclick=f; e.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();f();}};});
   const c=$('clrDay'); if(c) c.onclick=ev=>{ev.preventDefault();S.day=null;renderDetail();};
 }
 function render(){ if(!S.data) return; renderSum(); renderCards(); renderDetail();
-  const d=new Date(S.data.frissitve); $('upd').textContent='Frissítve '+d.toLocaleString('hu-HU',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})+(S.stale?' (mentett állapot)':'');
+  const d=new Date(S.data.frissitve); $('upd').className='upd'+(S.stale?' stale':''); $('upd').innerHTML='<i></i>'+(S.stale?'Mentett állapot, ':'Élő adat, ')+d.toLocaleString('hu-HU',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   $('err').innerHTML=(S.data.hibak||[]).length?`<div class="err">${S.data.hibak.map(esc).join('<br>')}</div>`:'';
   $('foot').textContent='Az egyenleg és a kötések a cégek rendszeréből jönnek, néhány percenként frissülve. A fiókok ára és a kifizetések a főkönyvből; a becsültként jelölt kifizetés összegét az egyenleg-változásból számolja az oldal.';
 }
 async function load(){
   let D=null; S.stale=false;
-  try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(r.ok) D=await r.json(); }catch(e){}
+  if(!/[?&]local=1/.test(location.search)){ try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(r.ok) D=await r.json(); }catch(e){} }
   if(!D){ try{ const r=await fetch('accounts.json',{cache:'no-cache'}); if(r.ok){ D=await r.json(); S.stale=true; } }catch(e){} }
   if(!D){ if(!S.data) $('err').innerHTML='<div class="err">Az adat most nem érhető el. Az oldal percenként újrapróbálja.</div>'; return; }
   S.data=D; if(S.sel==null&&location.hash){ const h=decodeURIComponent(location.hash.slice(1)); if(accts().some(a=>a.id===h)) S.sel=h; }
   if(S.sel&&!sel()) S.sel=null; render();
 }
-$('theme').onclick=()=>{const r=document.documentElement, cur=r.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'); r.dataset.theme=cur==='dark'?'light':'dark'; try{localStorage.setItem('theme',r.dataset.theme);}catch(e){}};
-try{const t=localStorage.getItem('theme'); if(t) document.documentElement.dataset.theme=t;}catch(e){}
+// csillagmező: lassan sodródó pontok két mélységben (egyetlen háttér-mozgás; csökkentett mozgásnál áll)
+(function(){ const c=$('stars'), x=c.getContext('2d'); let W=0,H=0,st=[],raf=0; const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function size(){ const d=Math.min(devicePixelRatio||1,2); W=innerWidth;H=innerHeight; c.width=W*d;c.height=H*d; x.setTransform(d,0,0,d,0,0); const n=Math.round(W*H/5200); let s=7; const r=()=>(s=(s*16807)%2147483647)/2147483647; st=Array.from({length:n},()=>({x:r()*W,y:r()*H,z:.25+r()*.75,c:r()<.12?'#3DF2FF':r()<.2?'#9B7BFF':'#DCE8FF'})); draw(0); }
+  function draw(t){ x.clearRect(0,0,W,H); for(const p of st){ const px=(p.x+t*6*p.z)%W; x.globalAlpha=.25+.6*p.z; x.fillStyle=p.c; x.fillRect(px,p.y,p.z*1.6,p.z*1.6); } x.globalAlpha=1; }
+  function loop(now){ draw(now/1000); if(!document.hidden) raf=requestAnimationFrame(loop); }
+  addEventListener('resize',size); size(); if(!still){ raf=requestAnimationFrame(loop); document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); } }); }
+})();
+matchMedia('(max-width:720px)').addEventListener('change',()=>{ if(S.data) renderOrbit(); });
 load(); setInterval(load,60000);
 </script>
 </body>
