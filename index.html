@@ -64,6 +64,10 @@ h1,h2,h3,.dsp{font-family:"Chakra Petch","Exo 2",sans-serif;margin:0;letter-spac
 .eq svg{display:block;width:100%;height:auto;overflow:visible} .eq text{font-family:"Exo 2",sans-serif;font-size:11.5px;fill:var(--muted)}
 .panel h3 .ic{font-size:19px;color:var(--ph,var(--funded));margin-right:9px}
 #orbit .node{cursor:pointer}
+#orbit .spin{transform-box:fill-box;transform-origin:center;animation:spin 14s linear infinite} #orbit .spin.slow{animation-duration:60s} #orbit .spin.rev{animation-duration:90s;animation-direction:reverse}
+#orbit .breathe{animation:breathe 2.6s ease-in-out infinite} #orbit .cpu{animation:pulse 2.2s ease-in-out infinite} #orbit .blink{animation:pulse 1.2s steps(2) infinite}
+@keyframes spin{to{transform:rotate(360deg)}} @keyframes breathe{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){ #orbit .spin,#orbit .breathe,#orbit .cpu,#orbit .blink{animation:none} }
 #orbit .node:focus-visible{outline:none}
 #orbit .node:focus-visible .halo{stroke:#fff;stroke-width:2}
 #orbit text{font-family:"Chakra Petch",sans-serif;fill:var(--ink);paint-order:stroke;stroke:#060918;stroke-width:5px;stroke-linejoin:round}
@@ -106,6 +110,19 @@ h1,h2,h3,.dsp{font-family:"Chakra Petch","Exo 2",sans-serif;margin:0;letter-spac
 .cw.passed .bal,.cw.passed .firm{color:#FFE9A6} .chip.passed{--ph:var(--gold);background:rgba(255,201,74,.2)}
 .passflag{display:flex;align-items:center;gap:8px;padding:8px 12px;font:600 14px "Chakra Petch",sans-serif;color:#FFE9A6;border:1px solid rgba(255,201,74,.55);background:rgba(255,201,74,.12)}
 .passflag svg{width:16px;height:16px;fill:none;stroke:var(--gold);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cw.prime{filter:drop-shadow(0 0 22px rgba(61,242,255,.38))} .cw.prime:hover,.cw.prime.on{filter:drop-shadow(0 0 30px rgba(61,242,255,.6))}
+.cw.prime .card{--cut:22px;padding:20px 20px 16px;background:linear-gradient(120deg,var(--funded),#1B6E9E 22%,var(--line-2) 40%,#fff 50%,var(--line-2) 60%,#1B6E9E 78%,var(--funded));background-size:300% 100%;animation:primeedge 7s linear infinite}
+.cw.prime .card::before{inset:2px;background:radial-gradient(110% 80% at 100% 0%,rgba(61,242,255,.16),transparent 55%),linear-gradient(160deg,rgba(13,30,58,.98),rgba(6,12,30,.98))}
+.cw.prime .bal{font-size:40px} .cw.prime .firm{font-size:19px} .cw.prime .chip{font-size:13.5px;padding:3px 12px 3px 10px;background:color-mix(in srgb,var(--funded) 22%,transparent)}
+.pgrid{display:grid;gap:14px} .pmain{display:flex;flex-direction:column;gap:12px}
+.path{border:1px solid color-mix(in srgb,var(--funded) 35%,var(--line));background:rgba(8,14,34,.7);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.path .pt{font:600 14px "Chakra Petch",sans-serif;color:var(--funded)} .cw.pay .path .pt{color:var(--gold)}
+.path .pc{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--muted);line-height:1.35} .path .pc i{flex:none;width:13px;height:13px;margin-top:2px;border:1.5px solid var(--line-2);transform:rotate(45deg) scale(.8)}
+.path .pc.ok{color:var(--ink)} .path .pc.ok i{background:var(--pos);border-color:var(--pos);box-shadow:0 0 8px var(--pos)}
+@keyframes primeedge{to{background-position:-300% 0}}
+@media (min-width:900px){ .cw.prime{grid-column:span 2} .cw.prime .pgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch} }
+.cw.trophy{align-self:start;filter:drop-shadow(0 0 10px rgba(255,201,74,.28))} .cw.trophy .card{--cut:14px;padding:14px 16px 12px;gap:10px} .cw.trophy .emb{width:34px;height:38px} .cw.trophy .sub b{color:var(--funded)}
+@media (prefers-reduced-motion:reduce){ .cw.prime .card{animation:none} }
 @keyframes sheen{0%,55%{background-position:130% 0}100%{background-position:-60% 0}}
 @media (prefers-reduced-motion:reduce){ .cw.passed .card::after{animation:none} }
 .card .hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -222,7 +239,7 @@ dialog#pinDlg::backdrop{background:rgba(4,6,15,.78)}
   <div id="err"></div>
   <section class="hero" aria-label="A flotta áttekintése">
     <div id="scene" role="group" aria-label="A számlák a mérleg körül keringenek; egy számlára kattintva megnyílnak a részletei" hidden><div class="labels" id="plabels"></div></div>
-    <svg id="orbit" viewBox="0 0 1000 400" role="group" aria-label="A számlák a mérleg körül keringenek; egy számlára kattintva megnyílnak a részletei"></svg>
+    <svg id="orbit" viewBox="0 0 1000 400" role="group" aria-label="Vezérlőközpont: középen a Raspberry Pi, körülötte a fiókok; egy fiókra kattintva megnyílnak a részletei"></svg>
     <div class="huds" id="huds"></div>
   </section>
   <div id="paybar"></div>
@@ -336,19 +353,25 @@ function payFlag(a){
   const ok=k.feltetelek.filter(f=>f.ok).length; return `<div class="payflag wait"><i></i>Kifizetéshez ${ok} / ${k.feltetelek.length} feltétel megvan</div>`;
 }
 function card(a){
-  const on=S.sel===a.id, act=a.allapot==='aktív', pay=a.kifizetheto&&a.kifizetheto.lehet;
+  const on=S.sel===a.id, act=a.allapot==='aktív', pay=a.kifizetheto&&a.kifizetheto.lehet, won=a.allapot==='passzolt', big=act&&a.fazis!=='eval';
+  const hd=`<div class="hd"><div class="who">${emblem(a)}<div style="min-width:0"><div class="firm">${esc(a.ceg)}</div><div class="plan">${esc(a.csomag)}, ${esc(short(a.id))}</div></div></div>${chip(a)}</div>`;
+  const ft=`<div class="ft"><span>Ára ${a.ar_ismert?usd(a.koltes):'nincs megadva'}</span><span>${a.kifizetesek.length?a.kifizetesek.length+' kifizetés, '+usd(a.kapott):'még nincs kifizetés'}</span></div>`;
+  if(won){   // átment eval = trófea: kicsi arany kártya, a főszerep a belőle lett funded fióké
+    const nd=Object.keys(a.napok||{}).length, n=(a.id.match(/(\d+)$/)||[])[1], f=n&&accts().find(x=>x.fazis!=='eval'&&x.ceg===a.ceg&&(x.id.match(/(\d+)$/)||[])[1]===String(+n+1));
+    return `<div class="cw passed trophy ${on?'on':''}"><button type="button" class="card" aria-pressed="${on}" data-id="${esc(a.id)}">${hd}
+      <div class="passflag"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6"/></svg>Cél teljesítve: ${sgn(a.pnl)}${nd?`, ${nd} nap alatt`:''}</div>
+      ${f?`<div class="sub">Ebből lett: <b>Funded ${esc(short(f.id))}</b></div>`:''}${ft}</button>${botStrip(a)}</div>`; }
   const kv=a.fazis==='eval'&&act
     ? [[ic('target')+'Célig',usd(a.cel_hatra)],[ic('shield')+'Párna',usd(a.parna)],[ic('today')+'Ma',`<span class="${cls(a.ma)}">${sgn(a.ma)}</span>`]]
     : [[ic('shield')+'Párna',act?usd(a.parna):'–'],[ic('payout')+'Kifizetve',usd(a.kapott)],[ic('today')+'Ma',act?`<span class="${cls(a.ma)}">${sgn(a.ma)}</span>`:'–']];
-  return `<div class="cw ${phCls(a)} ${on?'on':''} ${act?'':'off'} ${pay?'pay':''}"><button type="button" class="card" aria-pressed="${on}" data-id="${esc(a.id)}">
-    <div class="hd"><div class="who">${emblem(a)}<div style="min-width:0"><div class="firm">${esc(a.ceg)}</div><div class="plan">${esc(a.csomag)}, ${esc(short(a.id))}</div></div></div>${chip(a)}</div>
-    <div class="core">${gauge(a)}<div><div class="bal">${usd(a.egyenleg)}</div><div class="sub">Eredmény <b class="${cls(a.pnl)}">${sgn(a.pnl)}</b></div>${act&&a.padlo!=null?`<div class="sub">Padló <span class="neg">${usd(a.padlo)}</span>${a.fazis==='eval'&&a.cel?`, cél ${usd(a.kezdo+a.cel)}`:''}</div>`:''}${a.nyitott?`<div class="sub">${a.nyitott} nyitott pozíció</div>`:''}${dayBars(a)}</div></div>
-    <div class="kv">${kv.map(([k,v])=>`<span><span class="k">${k}</span><span class="v">${v}</span></span>`).join('')}</div>
-    ${a.allapot==='passzolt'?`<div class="passflag"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6"/></svg>Cél teljesítve: ${sgn(a.pnl)}</div>`:''}${payFlag(a)}
-    <div class="ft"><span>Ára ${a.ar_ismert?usd(a.koltes):'nincs megadva'}</span><span>${a.kifizetesek.length?a.kifizetesek.length+' kifizetés, '+usd(a.kapott):'még nincs kifizetés'}</span></div>
+  const main=`<div class="core">${gauge(a)}<div><div class="bal">${usd(a.egyenleg)}</div><div class="sub">Eredmény <b class="${cls(a.pnl)}">${sgn(a.pnl)}</b></div>${act&&a.padlo!=null?`<div class="sub">Padló <span class="neg">${usd(a.padlo)}</span>${a.fazis==='eval'&&a.cel?`, cél ${usd(a.kezdo+a.cel)}`:''}</div>`:''}${a.nyitott?`<div class="sub">${a.nyitott} nyitott pozíció</div>`:''}${dayBars(a)}</div></div>
+    <div class="kv">${kv.map(([k,v])=>`<span><span class="k">${k}</span><span class="v">${v}</span></span>`).join('')}</div>`;
+  const k=a.kifizetheto, path=big&&k?`<div class="path"><div class="pt">${pay?`Kifizetés kérhető: ${usd(k.osszeg)}, ebből neked ${usd(k.kapnal)}`:`Út a${k.hanyadik?' '+k.hanyadik+'.':''} kifizetésig`}</div>${k.feltetelek.map(f=>`<div class="pc ${f.ok?'ok':''}"><i></i><span>${esc(f.szoveg)}</span></div>`).join('')}</div>`:'';
+  return `<div class="cw ${phCls(a)} ${big?'prime':''} ${on?'on':''} ${act?'':'off'} ${pay?'pay':''}"><button type="button" class="card" aria-pressed="${on}" data-id="${esc(a.id)}">
+    ${hd}${big?`<div class="pgrid"><div class="pmain">${main}</div>${path}</div>`:main+payFlag(a)}
+    ${ft}
   </button>${botStrip(a)}</div>`;
 }
-const ORB={t0:performance.now(),raf:0,nodes:[]};
 function renderSum(){
   const o=S.data.osszesen, A=accts();
   $('huds').innerHTML=[
@@ -362,37 +385,87 @@ function renderSum(){
   const pb=$('paybar').querySelector('button'); if(pb) pb.onclick=()=>pick(pb.dataset.id,true);
   renderOrbit();
 }
-// pályarendszer: középen a mérleg; belső pálya = funded, középső = eval, külső = lezárt fiókok. A bolygó színe a fázis, arany gyűrű = kérhető kifizetés.
+// vezérlőközpont: középen a Raspberry Pi (a botok gépe), balra a bemenetek (árfolyam, ez az oldal), jobbra brókerenként a fiókok. A vonalakon mozgó pontok = adatforgalom:
+// cián = megbízás a fiók felé (csak ahol bot kereskedik), menta = visszajövő adat. Funded = nagy csomópont; átment eval = kis arany csomópont, szaggatott vonallal a belőle lett fundedhez.
+const NET={sig:''};
 function renderOrbit(){
-  if(window.Fleet3D&&window.Fleet3D.ok){ $('orbit').style.display='none'; $('scene').hidden=false; window.Fleet3D.update(S.data,S.sel); return; }
-  const o=S.data.osszesen, A=accts(), sv=$('orbit'), M=matchMedia('(max-width:720px)').matches, CX=500, CY=M?190:200, K=M?0.42:0.36;
-  const rings=M?[['funded',90,'var(--funded)'],['eval',150,'var(--eval)'],['off',198,'var(--muted)']]:[['funded',185,'var(--funded)'],['eval',305,'var(--eval)'],['off',425,'var(--muted)']];
-  sv.setAttribute('viewBox',M?'290 82 420 216':'0 0 1000 400'); ORB.M=M;
-  const grp={funded:[],eval:[],off:[]}; for(const a of A) grp[a.allapot!=='aktív'?'off':(a.fazis==='eval'?'eval':'funded')].push(a);
-  let h=`<defs><radialGradient id="gCore"><stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="${o.netto>=0?'#4DFFC0':'#FF6B94'}"/><stop offset="1" stop-color="${o.netto>=0?'#4DFFC0':'#FF6B94'}" stop-opacity="0"/></radialGradient>
-    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
-  for(const [k,r,c] of rings) h+=`<ellipse cx="${CX}" cy="${CY}" rx="${r}" ry="${(r*K).toFixed(1)}" fill="none" stroke="${c}" stroke-opacity="${grp[k].length?.7:.3}" stroke-width="1" stroke-dasharray="${k==='off'?'2 7':'none'}"/>`;
-  h+=`<circle cx="${CX}" cy="${CY}" r="58" fill="url(#gCore)" opacity=".55"/><circle cx="${CX}" cy="${CY}" r="9" fill="#fff" filter="url(#glow)"/>
-      <text x="${CX}" y="${CY-26}" text-anchor="middle" font-size="26" font-weight="600" fill="${o.netto>=0?'var(--pos)':'var(--neg)'}">${sgn(o.netto)}</text>
-      <text x="${CX}" y="${CY+36}" text-anchor="middle" font-size="12.5" style="font-family:'Exo 2',sans-serif;fill:var(--muted)">mérleg: kifizetés − költés</text>`;
-  ORB.nodes=[];
-  for(const [k,r,c] of rings) grp[k].forEach((a,i)=>{
-    const pay=a.kifizetheto&&a.kifizetheto.lehet, won=a.allapot==='passzolt', rad=won?8:k==='off'?5:9, col=won?'var(--gold)':a.allapot==='bukott'?'var(--floor)':c;
-    h+=`<g class="node" data-id="${esc(a.id)}" data-r="${r}" data-ph="${(i/grp[k].length*360+(k==='eval'?35:k==='off'?200:300)).toFixed(1)}" role="button" tabindex="0" aria-label="${esc(a.ceg)} ${esc(a.csomag)}, ${esc(short(a.id))}: ${usd(a.egyenleg)}">
-      ${pay?`<circle r="${rad+9}" fill="none" stroke="var(--gold)" stroke-width="1.5" filter="url(#glow)"/>`:''}
-      <circle class="halo" r="${rad+4}" fill="${col}" fill-opacity=".16" stroke="${S.sel===a.id?'#fff':'none'}"/>
-      <circle r="${rad}" fill="${col}" filter="url(#glow)"/>
-      ${(k==='off'&&!won)||M?'':`<text x="${rad+12}" y="-2" font-size="13.5" font-weight="600" ${won?'style="fill:#FFE9A6"':''}>${esc(a.ceg)}</text><text x="${rad+12}" y="15" font-size="12.5" style="font-family:'Exo 2',sans-serif;fill:${won?'var(--gold)':'var(--muted)'}">${won?'Átment':(PH[a.fazis]||'')}, ${usd(a.egyenleg)}</text>`}
-    </g>`; });
-  sv.innerHTML=h;
-  sv.querySelectorAll('.node').forEach(g=>{ ORB.nodes.push({g,r:+g.dataset.r,ph:+g.dataset.ph}); const f=()=>pick(g.dataset.id,true); g.onclick=f; g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f();}}; });
-  const place=t=>{ for(const n of ORB.nodes){ const sp=n.r<(ORB.M?100:200)?5.2:n.r<(ORB.M?160:320)?3.4:1.6, ang=(n.ph+t*sp)*Math.PI/180, x=CX+n.r*Math.cos(ang), y=CY+n.r*K*Math.sin(ang); n.g.setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)})`); const tx=n.g.querySelectorAll('text'); const left=x>CX+230; tx.forEach(e=>{e.setAttribute('text-anchor',left?'end':'start'); e.setAttribute('x',left?-21:21);}); } };
-  cancelAnimationFrame(ORB.raf); const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const loop=now=>{ place((now-ORB.t0)/1000); if(!still&&!document.hidden) ORB.raf=requestAnimationFrame(loop); }; loop(performance.now());
-  if(!still) document.onvisibilitychange=()=>{ if(!document.hidden){ cancelAnimationFrame(ORB.raf); ORB.raf=requestAnimationFrame(loop); } };
+  const o=S.data.osszesen, A=accts(), sv=$('orbit'), M=matchMedia('(max-width:720px)').matches, still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $('scene').hidden=true; sv.style.display='';
+  const CX=500, CY=M?250:205, piOn=ctlFresh(), bots=(S.ctl&&S.ctl.botok)||{}, nBot=Object.keys(bots).filter(k=>bots[k].fut).length;
+  const BN={hyperprop:'Hyperprop',topstep:'TopstepX','kézi':'Kézi fiókok'}, grp={}; for(const a of A) (grp[a.forras||'kézi']=grp[a.forras||'kézi']||[]).push(a);
+  const keys=Object.keys(grp).sort(), rank=a=>a.allapot==='aktív'?(a.fazis==='eval'?1:0):a.allapot==='passzolt'?2:3;
+  const P=[], E=[]; let eid=0;
+  const edge=(p,q,col,o={})=>{ const id='e'+(eid++), dx=(q.x-p.x)*.5, d=M&&o.vert?`M${p.x} ${p.y}C${p.x} ${p.y+(q.y-p.y)*.5} ${q.x} ${q.y-(q.y-p.y)*.5} ${q.x} ${q.y}`:`M${p.x} ${p.y}C${(p.x+dx).toFixed(1)} ${p.y} ${(q.x-dx).toFixed(1)} ${q.y} ${q.x} ${q.y}`; E.push({id,d,col,...o}); return id; };
+  const pkt=(id,col,dur,begin,rev,r)=>still||!piOn?'':`<circle r="${r||2.6}" fill="${col}" filter="url(#glow)"><animateMotion dur="${dur}s" begin="${begin}s" repeatCount="indefinite" ${rev?'keyPoints="1;0" keyTimes="0;1" calcMode="linear"':''}><mpath href="#${id}"/></animateMotion></circle>`;
+  const core={x:CX,y:CY};
+  // bemenetek
+  const feed=M?{x:CX-110,y:70}:{x:CX-300,y:CY-78}, site=M?{x:CX+110,y:70}:{x:CX-300,y:CY+78};
+  const eF=edge(feed,M?{x:CX-22,y:CY-46}:{x:CX-64,y:CY-14},'var(--funded)',{vert:1}), eS=edge(M?{x:CX+22,y:CY-46}:{x:CX-64,y:CY+14},site,'var(--eval)',{vert:1,back:1});
+  P.push(pkt(eF,'var(--funded)',2.2,0),pkt(eF,'var(--funded)',2.2,.75),pkt(eF,'var(--funded)',2.2,1.5),pkt(eS,'var(--eval)',4.5,.4,M?0:0));
+  // brókerek és fiókok
+  let nodes='';
+  keys.forEach((k,i)=>{
+    const t=keys.length===1?0:(i/(keys.length-1)-.5), hub=M?{x:CX+t*260,y:CY+118}:{x:CX+145,y:CY+t*230};
+    const L=grp[k].slice().sort((x,y)=>rank(x)-rank(y)), live=L.some(a=>bots[a.id]&&bots[a.id].fut);
+    const eH=edge(M?{x:CX+t*30,y:CY+46}:{x:CX+64,y:CY+t*20},hub,'var(--funded)',{vert:1,w:live?1.6:1});
+    if(live) P.push(pkt(eH,'var(--funded)',2.6,.2),pkt(eH,'var(--pos)',2.6,1.3,1)); else P.push(pkt(eH,'var(--pos)',5,.5,1));
+    nodes+=`<g transform="translate(${hub.x} ${hub.y})"><path d="M0-13L11.300-6.500V6.500L0 13-11.300 6.500V-6.500z" fill="#0B1228" stroke="var(--line-2)" stroke-width="1.3"/><circle r="3" fill="var(--muted)"/>
+      <text x="0" y="${M?30:-22}" text-anchor="middle" font-size="12" style="fill:var(--muted)">${esc(BN[k]||k)}</text></g>`;
+    const pos={};
+    L.forEach((a,j)=>{
+      const u=L.length===1?0:(j/(L.length-1)-.5), sp=Math.min(1,.42+L.length*.16);
+      const q=M?{x:hub.x+u*sp*240,y:hub.y+100+(j%2)*26}:{x:hub.x+140-Math.abs(u)*20,y:hub.y+u*sp*175}; pos[a.id]=q;
+      const act=a.allapot==='aktív', won=a.allapot==='passzolt', fund=act&&a.fazis!=='eval', b=botSt(a.id), run=b&&b.k==='run';
+      const col=won?'var(--gold)':a.allapot==='bukott'?'var(--floor)':!act?'var(--muted)':fund?'var(--funded)':'var(--eval)', r=fund?24:act?15:won?11:7;
+      const e=edge(hub,{x:q.x-(M?0:r+4),y:q.y-(M?r+4:0)},col,{vert:1,w:fund?1.8:1,dash:act?(run?'':'5 6'):'2 6',op:act?.75:.4});
+      if(act){ if(run) P.push(pkt(e,'var(--funded)',fund?1.5:2.4,.1,0,fund?3.2:2.6),pkt(e,'var(--funded)',fund?1.5:2.4,fund?.85:1.3,0,fund?3.2:2.6)); P.push(pkt(e,'var(--pos)',fund?2.1:3.6,.6,1)); }
+      const hex=(R)=>`M0${-R}L${(R*.866).toFixed(1)} ${(-R/2).toFixed(1)}V${(R/2).toFixed(1)}L0 ${R}L${(-R*.866).toFixed(1)} ${(R/2).toFixed(1)}V${(-R/2).toFixed(1)}z`;
+      const pay=a.kifizetheto&&a.kifizetheto.lehet, lx=M?0:r+14, anc=M?'middle':'start', ly=M?r+18:0;
+      nodes+=`<g class="node" transform="translate(${q.x.toFixed(1)} ${q.y.toFixed(1)})" data-id="${esc(a.id)}" role="button" tabindex="0" aria-label="${esc(a.ceg)} ${esc(a.csomag)}, ${esc(short(a.id))}, ${won?'átment':PH[a.fazis]||''}: ${usd(a.egyenleg)}">
+        ${fund?`<circle r="${r+16}" fill="${col}" opacity=".07"/><circle class="spin" r="${r+9}" fill="none" stroke="${col}" stroke-width="1.2" stroke-dasharray="3 9" opacity=".8"/><circle class="breathe" r="${r+3}" fill="none" stroke="${col}" stroke-width="1"/>`:''}
+        ${pay?`<circle r="${r+13}" fill="none" stroke="var(--gold)" stroke-width="1.6" filter="url(#glow)"/>`:''}
+        <path class="halo" d="${hex(r)}" fill="color-mix(in srgb,${col} ${fund?26:16}%,#060918)" stroke="${S.sel===a.id?'#fff':col}" stroke-width="${fund?2:1.3}" ${fund||won?'filter="url(#glow)"':''}/>
+        ${fund?`<path d="${hex(r-7)}" fill="none" stroke="${col}" stroke-opacity=".45"/><text y="5" text-anchor="middle" font-size="13" font-weight="700" style="fill:#fff;stroke:none">F</text>`:won?`<path d="M-4.500 0l3.200 3.200 5.800-6.400" fill="none" stroke="#FFE9A6" stroke-width="1.8" stroke-linecap="round"/>`:act?`<circle r="3.200" fill="${col}"/>`:''}
+        ${b?`<circle cx="${(r*.78).toFixed(1)}" cy="${(-r*.78).toFixed(1)}" r="4" fill="${b.k==='run'?'var(--pos)':b.k==='pause'?'var(--gold)':'var(--floor)'}" stroke="#060918" stroke-width="1.5"/>`:''}
+        ${!act&&!won?'':`<text x="${lx}" y="${ly-(M?0:fund?10:3)}" text-anchor="${anc}" font-size="${fund?15.5:12.5}" font-weight="600" ${won?'style="fill:#FFE9A6"':''}>${fund?'Funded':won?'Átment':'Eval'} ${esc(short(a.id))}</text>
+          <text x="${lx}" y="${ly+(M?15:fund?9:13)}" text-anchor="${anc}" font-size="${fund?14:12}" style="font-family:'Exo 2',sans-serif;fill:${fund?'var(--ink)':'var(--muted)'}">${usd(a.egyenleg)}${fund&&!M&&a.parna!=null?`, párna ${usd(a.parna)}`:''}</text>
+          ${fund&&!M?`<text x="${lx}" y="${ly+26}" font-size="12" style="font-family:'Exo 2',sans-serif;fill:${b?(b.k==='run'?'var(--pos)':b.k==='pause'?'var(--gold)':'var(--floor)'):'var(--muted)'}">${b?'bot: '+b.t.toLowerCase():'bot nélkül'}</text>`:''}`}
+      </g>`;
+    });
+    // származás: átment eval → a belőle lett funded (ugyanaz a cég, a fiókszám vége eggyel nagyobb)
+    for(const a of L) if(a.allapot==='passzolt'){ const n=(a.id.match(/(\d+)$/)||[])[1], f=n&&L.find(x=>x.fazis!=='eval'&&x.ceg===a.ceg&&(x.id.match(/(\d+)$/)||[])[1]===String(+n+1));
+      if(f&&pos[f.id]){ const id=edge(pos[a.id],pos[f.id],'var(--gold)',{line:1,dash:'3 5',op:.7}); P.push(pkt(id,'var(--gold)',3.4,0,0,2.2)); } }
+  });
+  const pin=(x,y)=>`<rect x="${x}" y="${y}" width="4" height="4" fill="var(--funded)" opacity=".75"/>`;
+  let h=`<defs><filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="gCore"><stop offset="0" stop-color="#3DF2FF" stop-opacity=".34"/><stop offset="1" stop-color="#3DF2FF" stop-opacity="0"/></radialGradient></defs>`;
+  for(const e of E) h+=`<path id="${e.id}" d="${e.line?e.d.replace(/C.*$/,m=>{const v=m.slice(1).trim().split(/\s+/);return 'L'+v[4]+' '+v[5];}):e.d}" fill="none" stroke="${e.col}" stroke-opacity="${e.op||.55}" stroke-width="${e.w||1}" ${e.dash?`stroke-dasharray="${e.dash}"`:''}/>`;
+  h+=P.join('');
+  // bemeneti csomópontok
+  h+=`<g transform="translate(${feed.x} ${feed.y})"><circle r="15" fill="#0B1228" stroke="var(--funded)" stroke-width="1.3"/><path d="M-7 4l4-5 3.500 3 5.500-7" fill="none" stroke="var(--funded)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="${M?0:-24}" y="${M?-24:-3}" text-anchor="${M?'middle':'end'}" font-size="12.5" font-weight="600">Árfolyam</text>${M?'':`<text x="-24" y="13" text-anchor="end" font-size="12" style="font-family:'Exo 2',sans-serif;fill:var(--muted)">TopstepX, élő</text>`}</g>
+    <g transform="translate(${site.x} ${site.y})"><circle r="15" fill="#0B1228" stroke="var(--eval)" stroke-width="1.3"/><path d="M-7-5h14v9h-14zM-3 8h6" fill="none" stroke="var(--eval)" stroke-width="1.5" stroke-linejoin="round"/>
+      <text x="${M?0:-24}" y="${M?-24:-3}" text-anchor="${M?'middle':'end'}" font-size="12.5" font-weight="600">Ez az oldal</text>${M?'':`<text x="-24" y="13" text-anchor="end" font-size="12" style="font-family:'Exo 2',sans-serif;fill:var(--muted)">állapot és kapcsolók</text>`}</g>`;
+  // a mag: Raspberry Pi lap
+  const st=piOn?'var(--pos)':'var(--floor)';
+  h+=`<g transform="translate(${CX} ${CY})"><circle r="104" fill="url(#gCore)"/>
+      <circle class="spin slow" r="84" fill="none" stroke="var(--funded)" stroke-opacity=".5" stroke-dasharray="2 10"/><circle class="spin rev" r="94" fill="none" stroke="var(--eval)" stroke-opacity=".4" stroke-dasharray="40 26"/>
+      <rect x="-62" y="-44" width="124" height="88" rx="7" fill="#081226" stroke="var(--funded)" stroke-width="1.6" filter="url(#glow)"/><rect x="-62" y="-44" width="124" height="88" rx="7" fill="#081226" stroke="var(--funded)" stroke-width="1.2"/>
+      ${[0,1,2,3].map(i=>`<circle cx="${i%2?54:-54}" cy="${i<2?-36:36}" r="2.600" fill="none" stroke="var(--line-2)"/>`).join('')}
+      ${Array.from({length:13},(_,i)=>pin(-44+i*7,-39)+pin(-44+i*7,-32)).join('')}
+      <rect x="44" y="-16" width="20" height="13" fill="#0B1228" stroke="var(--line-2)"/><rect x="44" y="2" width="20" height="13" fill="#0B1228" stroke="var(--line-2)"/><rect x="46" y="20" width="18" height="15" fill="#0B1228" stroke="var(--line-2)"/>
+      <path d="M-17 2h-26M-17 12h-34v18M17 8h20M0 21v14M-9 21v8h-20" fill="none" stroke="var(--funded)" stroke-opacity=".5"/>
+      <rect class="cpu" x="-17" y="-13" width="34" height="34" rx="2" fill="color-mix(in srgb,var(--funded) 22%,#081226)" stroke="var(--funded)" stroke-width="1.4"/><rect x="-10" y="-6" width="20" height="20" fill="none" stroke="var(--funded)" stroke-opacity=".6"/><circle class="cpu" cy="4" r="3.400" fill="#fff" filter="url(#glow)"/>
+      <circle cx="-48" cy="-20" r="2.600" fill="${st}" class="${piOn?'blink':''}"/><circle cx="-40" cy="-20" r="2.600" fill="var(--gold)" opacity=".8"/>
+      <text y="${M?-62:68}" text-anchor="middle" font-size="14.5" font-weight="600">Raspberry Pi</text>
+      <text y="${M?-48:84}" text-anchor="middle" font-size="12.500" style="font-family:'Exo 2',sans-serif;fill:${st}">${piOn?`él, ${nBot} bot fut`:'most nem válaszol'}<tspan style="fill:var(--muted)">, mérleg </tspan><tspan style="fill:${o.netto>=0?'var(--pos)':'var(--neg)'}">${sgn(o.netto)}</tspan></text></g>`;
+  h+=nodes;
+  const sig=h+M; if(sig===NET.sig) return; NET.sig=sig;
+  sv.setAttribute('viewBox',M?'300 30 400 '+(keys.length?510:330):'0 0 1000 410'); sv.innerHTML=h;
+  sv.querySelectorAll('.node').forEach(g=>{ const f=()=>pick(g.dataset.id,true); g.onclick=f; g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f();}}; });
 }
 function renderCards(){
-  const A=accts(), won=A.filter(a=>a.allapot==='passzolt'), act=A.filter(a=>a.allapot==='aktív').concat(won), cl=A.filter(a=>a.allapot!=='aktív'&&a.allapot!=='passzolt');
+  const A=accts(), won=A.filter(a=>a.allapot==='passzolt'), act=A.filter(a=>a.allapot==='aktív').sort((x,y)=>(x.fazis==='eval')-(y.fazis==='eval')).concat(won), cl=A.filter(a=>a.allapot!=='aktív'&&a.allapot!=='passzolt');
   $('cards').innerHTML=act.length?act.map(card).join(''):'<div class="empty">Nincs aktív számla.</div>';
   $('actNote').textContent=act.length?'Kattints egy kártyára a naptárért és a részletekért.':'';
   $('closedSec').hidden=!cl.length; $('closed').innerHTML=cl.map(card).join('');
@@ -527,81 +600,7 @@ async function load(){
 })();
 matchMedia('(max-width:720px)').addEventListener('change',()=>{ if(S.data) renderOrbit(); });
 window.__fmt={usd,sgn,esc}; window.__pick=(id,sc)=>pick(id,sc); window.__fleetReady=()=>{ if(S.data) renderOrbit(); };
-load(); setInterval(load,60000); setInterval(async()=>{ if(!S.busy&&!document.hidden&&S.data&&await loadCtl()){ renderCtl(); renderCards(); } },15000);
-</script>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
-<script type="module">
-// 3D flotta: izzó mag (a mérleg), három pálya, a számlák megvilágított bolygók. Funded = gyűrűs bolygó, kérhető kifizetés = arany gyűrű, lezárt = kis törmelék a külső pályán.
-// Húzással forgatható; csökkentett mozgásnál áll. Ha a WebGL nem megy, az oldal az SVG-változatot mutatja.
-import * as THREE from 'three';
-const host=document.getElementById('scene'), lab=document.getElementById('plabels'), still=matchMedia('(prefers-reduced-motion: reduce)').matches;
-try{
-  const R=new THREE.WebGLRenderer({antialias:true,alpha:true}); R.setPixelRatio(Math.min(devicePixelRatio||1,2)); host.insertBefore(R.domElement,lab);
-  const scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(36,2,.1,200), root=new THREE.Group(); scene.add(root);
-  const COL={eval:0x9B7BFF,funded:0x3DF2FF,gold:0xFFC94A,bust:0xFF5C8A,off:0x6E7FAE,pos:0x4DFFC0,neg:0xFF6B94};
-  const glowTex=(()=>{const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d'), g=x.createRadialGradient(64,64,0,64,64,64); g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.22,'rgba(255,255,255,.55)'); g.addColorStop(1,'rgba(255,255,255,0)'); x.fillStyle=g; x.fillRect(0,0,128,128); return new THREE.CanvasTexture(c);})();
-  const glow=(col,sc,op=1)=>{const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:col,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false})); s.scale.set(sc,sc,1); return s;};
-  // mag
-  const core=new THREE.Group(); root.add(core);
-  const coreBall=new THREE.Mesh(new THREE.SphereGeometry(.5,48,32),new THREE.MeshBasicMaterial({color:0xffffff})); core.add(coreBall);
-  const coreGlow=glow(COL.pos,4.6,.85); core.add(coreGlow);
-  const cage=new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(1.05,1)),new THREE.LineBasicMaterial({color:COL.pos,transparent:true,opacity:.45})); core.add(cage);
-  const gy=[0,1].map(i=>{const m=new THREE.Mesh(new THREE.TorusGeometry(1.45+i*.28,.012,8,120),new THREE.MeshBasicMaterial({color:0xDCE8FF,transparent:true,opacity:.5})); m.rotation.x=1.1+i*.7; m.rotation.y=i*.9; core.add(m); return m;});
-  const light=new THREE.PointLight(0xffffff,60,0,1.6); root.add(light); scene.add(new THREE.AmbientLight(0x8090c0,.55));
-  // pályák
-  const RAD={funded:3.4,eval:5.5,off:7.5}, SPD={funded:.085,eval:.055,off:.026};
-  const ringOf=(r,col,op,dash)=>{const pts=[]; for(let i=0;i<=256;i++){const a=i/256*Math.PI*2; pts.push(new THREE.Vector3(Math.cos(a)*r,0,Math.sin(a)*r));} const g=new THREE.BufferGeometry().setFromPoints(pts);
-    const l=new THREE.Line(g,dash?new THREE.LineDashedMaterial({color:col,transparent:true,opacity:op,dashSize:.12,gapSize:.22}):new THREE.LineBasicMaterial({color:col,transparent:true,opacity:op})); if(dash) l.computeLineDistances(); root.add(l); return l;};
-  const rings={funded:ringOf(RAD.funded,COL.funded,.5),eval:ringOf(RAD.eval,COL.eval,.5),off:ringOf(RAD.off,COL.off,.4,true)};
-  for(const k of ['funded','eval']) for(let i=0;i<48;i++){ const a=i/48*Math.PI*2, r=RAD[k], t=new THREE.Mesh(new THREE.BoxGeometry(.02,.02,i%4?.1:.22),new THREE.MeshBasicMaterial({color:COL[k],transparent:true,opacity:.55})); t.position.set(Math.cos(a)*r,0,Math.sin(a)*r); t.lookAt(0,0,0); root.add(t); }
-  let planets=[], coreEl=null; const TR=44;
-  function build(D,selId){
-    for(const p of planets){ root.remove(p.g); root.remove(p.trail); p.el.remove(); } planets=[]; lab.innerHTML='';
-    const o=D.osszesen, pc=o.netto>=0?COL.pos:COL.neg; coreGlow.material.color.setHex(pc); cage.material.color.setHex(pc);
-    coreEl=document.createElement('div'); coreEl.className='corelabel'; coreEl.innerHTML=`<b style="color:${o.netto>=0?'var(--pos)':'var(--neg)'}">${window.__fmt.sgn(o.netto)}</b><span>mérleg: kifizetés − költés</span>`; lab.appendChild(coreEl);
-    const grp={funded:[],eval:[],off:[]}; for(const a of D.szamlak) grp[a.allapot!=='aktív'?'off':(a.fazis==='eval'?'eval':'funded')].push(a);
-    for(const k of ['funded','eval','off']){ rings[k].material.opacity=grp[k].length?(k==='off'?.4:.6):.18;
-      grp[k].forEach((a,i)=>{ const g=new THREE.Group(), pay=a.kifizetheto&&a.kifizetheto.lehet, col=a.allapot==='bukott'?COL.bust:COL[k];
-        if(k==='off'){ const m=new THREE.Mesh(new THREE.OctahedronGeometry(.17,0),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.5,roughness:.6,flatShading:true})); g.add(m); g.add(glow(col,.9,.5)); g.userData.spin=m; }
-        else{ const m=new THREE.Mesh(new THREE.SphereGeometry(.36,40,28),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.28,roughness:.42,metalness:.25})); g.add(m); g.add(glow(col,2.1,.55));
-          const band=new THREE.Mesh(new THREE.TorusGeometry(.365,.012,6,60),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35})); band.rotation.x=Math.PI/2; g.add(band);
-          if(k==='funded'){ const t=new THREE.Mesh(new THREE.RingGeometry(.52,.72,64),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.5,side:THREE.DoubleSide})); t.rotation.x=Math.PI/2-.35; t.rotation.y=.25; g.add(t); }
-          if(pay){ const t=new THREE.Mesh(new THREE.TorusGeometry(.95,.022,8,90),new THREE.MeshBasicMaterial({color:COL.gold})); t.rotation.x=Math.PI/2; g.add(t); g.add(glow(COL.gold,3.2,.5)); g.userData.pay=t; }
-          if(a.id===selId){ const t=new THREE.Mesh(new THREE.TorusGeometry(1.18,.014,8,90),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.9})); t.rotation.x=Math.PI/2; g.add(t); }
-          g.userData.spin=m; }
-        const hit=new THREE.Mesh(new THREE.SphereGeometry(k==='off'?.5:.95,12,8),new THREE.MeshBasicMaterial({visible:false})); hit.userData.id=a.id; g.add(hit); root.add(g);
-        const tg=new THREE.BufferGeometry(); tg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(TR*3),3)); const cc=new Float32Array(TR*3), c3=new THREE.Color(col); for(let j=0;j<TR;j++){ const f=Math.pow(1-j/(TR-1),1.6); cc[j*3]=c3.r*f; cc[j*3+1]=c3.g*f; cc[j*3+2]=c3.b*f; } tg.setAttribute('color',new THREE.BufferAttribute(cc,3));
-        const trail=new THREE.Line(tg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,linewidth:2})); trail.visible=k!=='off'; root.add(trail);
-        const el=document.createElement('div'); el.className='plabel'+(pay?' pay':''); el.style.setProperty('--c',a.allapot==='bukott'?'var(--floor)':k==='funded'?'var(--funded)':k==='eval'?'var(--eval)':'var(--muted)');
-        el.innerHTML=k==='off'?'':`<b>${window.__fmt.esc(a.ceg)}</b><span>${pay?'Kifizetés kérhető: '+window.__fmt.usd(a.kifizetheto.osszeg):(a.fazis==='eval'?'Eval':'Funded')+', '+window.__fmt.usd(a.egyenleg)}</span>`; lab.appendChild(el);
-        planets.push({g,hit,trail,el,k,r:RAD[k],ph:i/grp[k].length*Math.PI*2+(k==='eval'?.6:k==='off'?3.4:5.2),sp:SPD[k]}); }); }
-    frame(performance.now(),true);
-  }
-  // nézet
-  let rotY=0, rotX=0, tgtY=0, tgtX=0, drag=null, W=0, H=0;
-  function size(){ W=host.clientWidth; H=host.clientHeight; if(!W||!H) return; R.setSize(W,H,false); cam.aspect=W/H; const z=10.6*Math.max(1,Math.min(2.3/cam.aspect,1.32)); cam.position.set(0,z*.44,z); cam.lookAt(0,-.55,0); cam.updateProjectionMatrix(); frame(performance.now(),true); }
-  const v=new THREE.Vector3(); const proj=(obj,dy=0)=>{ obj.getWorldPosition(v); v.y+=dy; v.project(cam); return [(v.x*.5+.5)*W,(-v.y*.5+.5)*H]; };
-  let raf=0, t0=performance.now();
-  function frame(now,once){
-    const t=(now-t0)/1000; rotY+=(tgtY-rotY)*.08; rotX+=(tgtX-rotX)*.08; root.rotation.y=rotY+(still?0:t*.02); root.rotation.x=rotX;
-    cage.rotation.y=t*.25; cage.rotation.x=t*.13; gy[0].rotation.z=t*.5; gy[1].rotation.z=-t*.36; coreGlow.scale.setScalar(4.6+Math.sin(t*1.6)*.3);
-    for(const p of planets){ const a=p.ph+(still?0:t*p.sp); p.g.position.set(Math.cos(a)*p.r,0,Math.sin(a)*p.r); if(p.g.userData.spin) p.g.userData.spin.rotation.y=t*.6; if(p.g.userData.pay) p.g.userData.pay.scale.setScalar(1+Math.sin(t*3)*.07);
-      const pos=p.trail.geometry.attributes.position; for(let j=0;j<TR;j++){ const b=a-j*.022*(5.5/p.r+.6); pos.setXYZ(j,Math.cos(b)*p.r,0,Math.sin(b)*p.r); } pos.needsUpdate=true; }
-    R.render(scene,cam);
-    for(const p of planets){ const [x,y]=proj(p.g), left=x>W*.72; p.el.classList.toggle('left',left); p.el.style.transform=`translate(${left?x-22:x+22}px,${y-18}px)`+(left?' translateX(-100%)':''); p.el.style.display=W<560||x<0||x>W?'none':''; }
-    if(coreEl){ const [x,y]=proj(core,-1.75); coreEl.style.transform=`translate(${x}px,${y}px) translateX(-50%)`; }
-    if(!once&&!still&&!document.hidden) raf=requestAnimationFrame(frame);
-  }
-  const ray=new THREE.Raycaster(), m2=new THREE.Vector2(); const pickAt=e=>{ const r=host.getBoundingClientRect(); m2.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1); ray.setFromCamera(m2,cam); const h=ray.intersectObjects(planets.map(p=>p.hit),false)[0]; return h?h.object.userData.id:null; };
-  host.addEventListener('pointerdown',e=>{ drag={x:e.clientX,y:e.clientY,ry:tgtY,rx:tgtX,moved:false}; host.setPointerCapture(e.pointerId); });
-  host.addEventListener('pointermove',e=>{ if(drag){ const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.abs(dx)+Math.abs(dy)>4) drag.moved=true; tgtY=drag.ry+dx*.006; tgtX=Math.max(-.35,Math.min(.5,drag.rx+dy*.004)); if(still) frame(performance.now(),true); } else host.style.cursor=pickAt(e)?'pointer':'grab'; });
-  host.addEventListener('pointerup',e=>{ const d=drag; drag=null; if(d&&!d.moved){ const id=pickAt(e); if(id) window.__pick(id,true); } });
-  host.addEventListener('pointercancel',()=>{drag=null;});
-  new ResizeObserver(size).observe(host);
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&!still){ cancelAnimationFrame(raf); raf=requestAnimationFrame(frame); } });
-  window.Fleet3D={ok:true,update(D,selId){ host.hidden=false; size(); build(D,selId); cancelAnimationFrame(raf); if(!still) raf=requestAnimationFrame(frame); }};
-  if(window.__fleetReady) window.__fleetReady();
-}catch(e){ console.warn('3D nem indult, marad az SVG:',e); }
+load(); setInterval(load,60000); setInterval(async()=>{ if(!S.busy&&!document.hidden&&S.data&&await loadCtl()){ renderCtl(); renderCards(); renderOrbit(); } },15000);
 </script>
 </body>
 </html>
