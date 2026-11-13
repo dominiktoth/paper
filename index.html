@@ -99,6 +99,15 @@ h1,h2,h3,.dsp{font-family:"Chakra Petch","Exo 2",sans-serif;margin:0;letter-spac
 .card::after{content:"";position:absolute;inset:1px;pointer-events:none;opacity:.35;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 4px)}
 .card>*{position:relative;z-index:1}
 .cw.off .card{opacity:.8}
+.cw.passed{--ph:var(--gold);--ph2:var(--gold);filter:drop-shadow(0 0 18px rgba(255,201,74,.45))} .cw.passed.off .card{opacity:1}
+.cw.passed .card{background:linear-gradient(135deg,#FFE9A6,var(--gold) 30%,#A9741A 62%,#FFD978)}
+.cw.passed .card::before{background:radial-gradient(120% 90% at 0% 0%,rgba(255,201,74,.30),transparent 60%),linear-gradient(160deg,rgba(58,42,10,.97),rgba(24,17,6,.98) 55%,rgba(46,33,8,.97))}
+.cw.passed .card::after{opacity:1;background:linear-gradient(115deg,transparent 30%,rgba(255,236,170,.16) 46%,rgba(255,255,255,.28) 50%,rgba(255,236,170,.16) 54%,transparent 70%) no-repeat;background-size:250% 100%;background-position:130% 0;animation:sheen 5.5s ease-in-out infinite}
+.cw.passed .bal,.cw.passed .firm{color:#FFE9A6} .chip.passed{--ph:var(--gold);background:rgba(255,201,74,.2)}
+.passflag{display:flex;align-items:center;gap:8px;padding:8px 12px;font:600 14px "Chakra Petch",sans-serif;color:#FFE9A6;border:1px solid rgba(255,201,74,.55);background:rgba(255,201,74,.12)}
+.passflag svg{width:16px;height:16px;fill:none;stroke:var(--gold);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@keyframes sheen{0%,55%{background-position:130% 0}100%{background-position:-60% 0}}
+@media (prefers-reduced-motion:reduce){ .cw.passed .card::after{animation:none} }
 .card .hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .card .firm{font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:18px;line-height:1.2}
 .card .plan{color:var(--muted);font-size:13.5px}
@@ -233,7 +242,7 @@ dialog#pinDlg::backdrop{background:rgba(4,6,15,.78)}
   </section>
   <section id="detail" hidden></section>
   <section id="closedSec" hidden>
-    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M6 7v11a2 2 0 002 2h8a2 2 0 002-2V7M9 7V4h6v3M10 11v5M14 11v5"/></svg>Lezárt számlák</h2><small>Bukott, passzolt vagy megszűnt fiókok. A költésük és a kifizetéseik az összesítésben benne vannak.</small></div>
+    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M6 7v11a2 2 0 002 2h8a2 2 0 002-2V7M9 7V4h6v3M10 11v5M14 11v5"/></svg>Lezárt számlák</h2><small>Átment, bukott vagy megszűnt fiókok. A költésük és a kifizetéseik az összesítésben benne vannak.</small></div>
     <div class="cards" id="closed" style="margin-top:12px"></div>
   </section>
   <p class="note" id="foot"></p>
@@ -294,10 +303,10 @@ function equityChart(a){
 function accts(){return S.data?S.data.szamlak:[];}
 function sel(){return accts().find(a=>a.id===S.sel);}
 
-function phCls(a){ return a.allapot==='bukott'?'bust':a.allapot!=='aktív'?'done':a.fazis; }
+function phCls(a){ return a.allapot==='passzolt'?'passed':a.allapot==='bukott'?'bust':a.allapot!=='aktív'?'done':a.fazis; }
 function chip(a){
   if(a.allapot==='bukott') return '<span class="chip bust">Bukott</span>';
-  if(a.allapot==='passzolt') return '<span class="chip done">Passzolt</span>';
+  if(a.allapot==='passzolt') return '<span class="chip passed">Átment</span>';
   if(a.allapot!=='aktív') return `<span class="chip done">${esc(a.allapot)}</span>`;
   return `<span class="chip">${PH[a.fazis]||esc(a.fazis)}</span>`;
 }
@@ -307,7 +316,7 @@ function gauge(a){
   const arc=(f0,f1,r)=>{const [x0,y0]=pt(A0+SW*f0,r),[x1,y1]=pt(A0+SW*f1,r); return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${SW*(f1-f0)>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;};
   let f=0,fs=null,big='–',small='';
   if(a.padlo!=null){ const lo=a.padlo, goal=a.fazis==='eval'&&a.cel?a.kezdo+a.cel:null, hi=goal!=null?goal:Math.max(a.egyenleg,a.kezdo+(a.mll||1000)); const span=Math.max(hi-lo,1); f=Math.max(0,Math.min(1,(a.egyenleg-lo)/span)); fs=Math.max(0,Math.min(1,(a.kezdo-lo)/span)); }
-  if(!act){ big=a.allapot==='bukott'?'✕':'✓'; small=a.allapot; f=a.allapot==='bukott'?0:1; }
+  if(!act){ big=a.allapot==='bukott'?'✕':'✓'; small=a.allapot==='passzolt'?'átment':a.allapot; f=a.allapot==='bukott'?0:1; }
   else if(a.fazis==='eval'&&a.cel){ big=Math.max(0,Math.round((a.egyenleg-a.kezdo)/a.cel*100))+' %'; small='a célból'; }
   else { big=usd(a.parna); small='párna'; }
   const ticks=Array.from({length:28},(_,i)=>{const d=A0+SW*i/27,[x0,y0]=pt(d,61),[x1,y1]=pt(d,i%9===0?66:64); return `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="var(--line-2)" stroke-width="1"/>`;}).join('');
@@ -335,7 +344,7 @@ function card(a){
     <div class="hd"><div class="who">${emblem(a)}<div style="min-width:0"><div class="firm">${esc(a.ceg)}</div><div class="plan">${esc(a.csomag)}, ${esc(short(a.id))}</div></div></div>${chip(a)}</div>
     <div class="core">${gauge(a)}<div><div class="bal">${usd(a.egyenleg)}</div><div class="sub">Eredmény <b class="${cls(a.pnl)}">${sgn(a.pnl)}</b></div>${act&&a.padlo!=null?`<div class="sub">Padló <span class="neg">${usd(a.padlo)}</span>${a.fazis==='eval'&&a.cel?`, cél ${usd(a.kezdo+a.cel)}`:''}</div>`:''}${a.nyitott?`<div class="sub">${a.nyitott} nyitott pozíció</div>`:''}${dayBars(a)}</div></div>
     <div class="kv">${kv.map(([k,v])=>`<span><span class="k">${k}</span><span class="v">${v}</span></span>`).join('')}</div>
-    ${payFlag(a)}
+    ${a.allapot==='passzolt'?`<div class="passflag"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6"/></svg>Cél teljesítve: ${sgn(a.pnl)}</div>`:''}${payFlag(a)}
     <div class="ft"><span>Ára ${a.ar_ismert?usd(a.koltes):'nincs megadva'}</span><span>${a.kifizetesek.length?a.kifizetesek.length+' kifizetés, '+usd(a.kapott):'még nincs kifizetés'}</span></div>
   </button>${botStrip(a)}</div>`;
 }
@@ -383,7 +392,7 @@ function renderOrbit(){
   if(!still) document.onvisibilitychange=()=>{ if(!document.hidden){ cancelAnimationFrame(ORB.raf); ORB.raf=requestAnimationFrame(loop); } };
 }
 function renderCards(){
-  const A=accts(), act=A.filter(a=>a.allapot==='aktív'), cl=A.filter(a=>a.allapot!=='aktív');
+  const A=accts(), act=A.filter(a=>a.allapot==='aktív'), cl=A.filter(a=>a.allapot!=='aktív').sort((x,y)=>(y.allapot==='passzolt')-(x.allapot==='passzolt'));
   $('cards').innerHTML=act.length?act.map(card).join(''):'<div class="empty">Nincs aktív számla.</div>';
   $('actNote').textContent=act.length?'Kattints egy kártyára a naptárért és a részletekért.':'';
   $('closedSec').hidden=!cl.length; $('closed').innerHTML=cl.map(card).join('');
@@ -505,6 +514,7 @@ async function load(){
   if(!D){ try{ const r=await fetch('accounts.json',{cache:'no-cache'}); if(r.ok){ D=await r.json(); S.stale=true; } }catch(e){} }
   if(!D){ if(!S.data) $('err').innerHTML='<div class="err">Az adat most nem érhető el. Az oldal percenként újrapróbálja.</div>'; return; }
   if(!S.busy) await loadCtl();
+  for(const a of (D&&D.szamlak)||[]) if(a.fazis==='eval'&&a.allapot==='aktív'&&/complet|pass/i.test(a.statusz||'')) a.allapot='passzolt';   // a Hyperprop „Completed” = átment eval
   S.data=D; if(S.sel==null&&location.hash){ const h=decodeURIComponent(location.hash.slice(1)); if(accts().some(a=>a.id===h)) S.sel=h; }
   if(S.sel&&!sel()) S.sel=null; render();
 }
