@@ -46,6 +46,23 @@ h1,h2,h3,.dsp{font-family:"Chakra Petch","Exo 2",sans-serif;margin:0;letter-spac
   background:linear-gradient(transparent,rgba(4,6,15,.0)),repeating-linear-gradient(90deg,rgba(61,242,255,.16) 0 1px,transparent 1px 64px),repeating-linear-gradient(0deg,rgba(61,242,255,.16) 0 1px,transparent 1px 32px);
   transform:perspective(520px) rotateX(62deg) scale(1.9);transform-origin:50% 100%;mask-image:linear-gradient(transparent,#000 70%);-webkit-mask-image:linear-gradient(transparent,#000 70%)}
 #orbit{display:block;width:100%;height:auto;position:relative;z-index:1}
+#scene{position:relative;z-index:1;height:clamp(300px,38vw,500px);cursor:grab;touch-action:pan-y}
+#scene:active{cursor:grabbing}
+#scene canvas{display:block;width:100%;height:100%}
+#scene .labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.plabel{position:absolute;left:0;top:0;will-change:transform;white-space:nowrap;font-family:"Chakra Petch",sans-serif;line-height:1.25;padding-left:14px;border-left:1px solid var(--c);text-shadow:0 0 8px #04060F,0 0 3px #04060F}
+.plabel b{display:block;font-size:14px;font-weight:600} .plabel span{font-size:12.5px;color:var(--muted);font-family:"Exo 2",sans-serif} .plabel.pay span{color:var(--gold)}
+.plabel.left{padding-left:0;padding-right:14px;border-left:0;border-right:1px solid var(--c);text-align:right}
+.corelabel{position:absolute;left:0;top:0;text-align:center;font-family:"Chakra Petch",sans-serif;text-shadow:0 0 10px #04060F,0 0 4px #04060F;white-space:nowrap}
+.corelabel b{display:block;font-size:28px;font-weight:600;line-height:1} .corelabel span{font-size:12.5px;color:var(--muted);font-family:"Exo 2",sans-serif}
+.ic{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
+.hud .k{display:inline-flex;align-items:center;gap:7px} .hud .k .ic{font-size:17px;color:var(--c,var(--funded))}
+.emb{width:42px;height:46px;flex:none} .emb text{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:13px;fill:var(--ink)}
+.card .who{display:flex;gap:11px;align-items:center;min-width:0}
+.bars{display:flex;align-items:flex-end;gap:3px;height:34px;margin-top:8px} .bars i{flex:1;max-width:12px;min-height:2px;background:var(--line-2)} .bars i.w{background:var(--pos);box-shadow:0 0 6px rgba(77,255,192,.5)} .bars i.l{background:var(--neg);box-shadow:0 0 6px rgba(255,107,148,.45)}
+.kv .k{display:inline-flex;align-items:center;gap:5px} .kv .k .ic{font-size:14px;color:var(--ph)}
+.eq svg{display:block;width:100%;height:auto;overflow:visible} .eq text{font-family:"Exo 2",sans-serif;font-size:11.5px;fill:var(--muted)}
+.panel h3 .ic{font-size:19px;color:var(--ph,var(--funded));margin-right:9px}
 #orbit .node{cursor:pointer}
 #orbit .node:focus-visible{outline:none}
 #orbit .node:focus-visible .halo{stroke:#fff;stroke-width:2}
@@ -67,7 +84,7 @@ h1,h2,h3,.dsp{font-family:"Chakra Petch","Exo 2",sans-serif;margin:0;letter-spac
 /* kártyák */
 .sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
 .sec-h h2{font-size:19px;font-weight:600;display:flex;align-items:center;gap:10px}
-.sec-h h2::before{content:"";width:10px;height:10px;background:var(--funded);box-shadow:0 0 12px var(--funded);transform:rotate(45deg)}
+.sec-h h2 .ic{font-size:21px;color:var(--funded);filter:drop-shadow(0 0 6px var(--funded))}
 .sec-h small{color:var(--muted);font-size:13px}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
 .cw{--ph:var(--eval);min-width:0;filter:drop-shadow(0 0 0 transparent);transition:filter .2s}
@@ -149,7 +166,7 @@ table.tr td.r{font-family:"Chakra Petch",sans-serif}
 
 @media (max-width:900px){ .grid{grid-template-columns:1fr} .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 0} .kpis div:nth-child(4){padding-left:0;border-left:0} }
 @media (max-width:720px){
-  .hud{position:static;min-width:0} .hud.tr,.hud.br{text-align:left;align-items:flex-start}
+  #scene{height:300px} .hud{position:static;min-width:0} .hud.tr,.hud.br{text-align:left;align-items:flex-start}
   .huds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px;padding:4px 18px 20px;position:relative;z-index:2}
   .hud .v{font-size:22px} .hero::after{display:none}
   .kpis b{font-size:17px} .kpis div{padding:2px 8px} .dhead h2{font-size:22px}
@@ -171,17 +188,18 @@ table.tr td.r{font-family:"Chakra Petch",sans-serif}
   </header>
   <div id="err"></div>
   <section class="hero" aria-label="A flotta áttekintése">
+    <div id="scene" role="group" aria-label="A számlák a mérleg körül keringenek; egy számlára kattintva megnyílnak a részletei" hidden><div class="labels" id="plabels"></div></div>
     <svg id="orbit" viewBox="0 0 1000 400" role="group" aria-label="A számlák a mérleg körül keringenek; egy számlára kattintva megnyílnak a részletei"></svg>
     <div class="huds" id="huds"></div>
   </section>
   <div id="paybar"></div>
   <section>
-    <div class="sec-h"><h2>Aktív számlák</h2><small id="actNote"></small></div>
+    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>Aktív számlák</h2><small id="actNote"></small></div>
     <div class="cards" id="cards" style="margin-top:12px"></div>
   </section>
   <section id="detail" hidden></section>
   <section id="closedSec" hidden>
-    <div class="sec-h"><h2>Lezárt számlák</h2><small>Bukott, passzolt vagy megszűnt fiókok. A költésük és a kifizetéseik az összesítésben benne vannak.</small></div>
+    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M6 7v11a2 2 0 002 2h8a2 2 0 002-2V7M9 7V4h6v3M10 11v5M14 11v5"/></svg>Lezárt számlák</h2><small>Bukott, passzolt vagy megszűnt fiókok. A költésük és a kifizetéseik az összesítésben benne vannak.</small></div>
     <div class="cards" id="closed" style="margin-top:12px"></div>
   </section>
   <p class="note" id="foot"></p>
@@ -200,6 +218,44 @@ const PH={eval:'Eval',funded:'Funded',live:'Élő'};
 const short=id=>{const s=String(id); return s.length>10?'…'+s.slice(-6):s;};
 const todayNY=()=>{const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hour12:false}).formatToParts(new Date()); const g=k=>p.find(x=>x.type===k).value; let d=new Date(`${g('year')}-${g('month')}-${g('day')}T12:00:00`); if(+g('hour')>=18) d.setDate(d.getDate()+1); return d.toISOString().slice(0,10);};
 const dLabel=iso=>new Date(iso+'T12:00:00').toLocaleDateString('hu-HU',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+const IC={
+  spend:'<path d="M3 7.5A2.5 2.5 0 015.5 5H18a1 1 0 011 1v2"/><path d="M3 7.5V17a2 2 0 002 2h14a1 1 0 001-1v-9a1 1 0 00-1-1H5.5A2.5 2.5 0 013 7.5z"/><circle cx="16.5" cy="13.5" r="1.2"/>',
+  payout:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7v10M14.8 9.3c-.5-.9-1.5-1.4-2.8-1.4-1.7 0-2.9.9-2.9 2.1 0 2.9 5.9 1.3 5.9 4.2 0 1.200-1.300 2.100-3 2.100-1.400 0-2.500-.6-3-1.600"/>',
+  fleet:'<path d="M12 3l8 4.500v9L12 21l-8-4.500v-9z"/><path d="M12 12l8-4.500M12 12v9M12 12L4 7.500"/>',
+  ready:'<path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5.500"/><path d="M9.800 12.200l1.600 1.600 2.900-3.300"/>',
+  target:'<circle cx="12" cy="12" r="8.500"/><circle cx="12" cy="12" r="4.500"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  shield:'<path d="M12 3l7.500 3v5.500c0 4.300-3 7.900-7.500 9.500-4.500-1.600-7.500-5.200-7.500-9.500V6z"/><path d="M12 8v8"/>',
+  today:'<path d="M3 12h4l2.500-6 4 12 2.500-6h5"/>',
+  cal:'<rect x="4" y="5" width="16" height="15" rx="1.500"/><path d="M4 10h16M8 3v4M16 3v4"/>',
+  book:'<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11M9 8h6"/>',
+  rules:'<path d="M12 3v18M5 7h14M5 7l-2.500 6a3 3 0 005 0zM19 7l-2.500 6a3 3 0 005 0zM8 21h8"/>',
+  trades:'<path d="M7 4v16M7 4L4 7M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3"/>',
+  chart:'<path d="M4 4v16h16"/><path d="M7 15l4-5 3 3 5-7"/>'
+};
+const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${IC[n]||''}</svg>`;
+// cég-embléma: hatszög monogrammal, a fázis színében
+function emblem(a){ const m=(a.ceg||'?').replace(/[^A-Za-zÁÉÍÓÖŐÚÜŰ ]/g,'').split(/\s+|(?=[A-Z])/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('')||'?';
+  return `<svg class="emb" viewBox="0 0 42 46" aria-hidden="true"><path d="M21 1.500l17.800 10.200v22.600L21 44.500 3.200 34.300V11.700z" fill="color-mix(in srgb,var(--ph) 14%,transparent)" stroke="var(--ph)" stroke-width="1.200"/><path d="M21 6l13.900 8v18L21 40 7.100 32V14z" fill="none" stroke="var(--ph)" stroke-opacity=".35" stroke-width="1"/><text x="21" y="27.500" text-anchor="middle">${esc(m)}</text></svg>`; }
+// az utolsó 14 kereskedési nap oszlopai
+function dayBars(a){ const ks=Object.keys(a.napok||{}).sort().slice(-14); if(!ks.length) return ''; const mx=Math.max(1,...ks.map(k=>Math.abs(a.napok[k].pnl)));
+  return `<div class="bars" role="img" aria-label="Az utolsó ${ks.length} kereskedési nap eredménye">${ks.map(k=>{const v=a.napok[k].pnl; return `<i class="${v>0?'w':v<0?'l':''}" style="height:${Math.max(6,Math.abs(v)/mx*100).toFixed(0)}%" title="${k}: ${sgn(v)}"></i>`;}).join('')}</div>`; }
+// egyenleg-görbe a padlóval és a céllal
+function equityChart(a){
+  const ks=Object.keys(a.napok||{}).sort(); if(!ks.length) return '<div class="empty">Még nincs kereskedési nap.</div>';
+  const pay={}; for(const p of a.kifizetesek||[]) pay[p.nap]=(pay[p.nap]||0)+p.osszeg;
+  let b=a.kezdo; const pts=[{d:'',v:b}]; for(const k of ks){ b+=a.napok[k].pnl-(pay[k]||0); pts.push({d:k,v:b}); }
+  const goal=a.fazis==='eval'&&a.cel?a.kezdo+a.cel:null, vals=pts.map(p=>p.v).concat(a.padlo!=null&&a.allapot==='aktív'?[a.padlo]:[],goal!=null?[goal]:[]);
+  let lo=Math.min(...vals), hi=Math.max(...vals); const pad=(hi-lo||100)*.12; lo-=pad; hi+=pad;
+  const W=720,H=230,L=64,R=14,T=12,B=26, X=i=>L+(W-L-R)*i/(pts.length-1||1), Y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
+  const line=pts.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(p.v).toFixed(1)).join(''), area=line+`L${X(pts.length-1).toFixed(1)} ${H-B}L${L} ${H-B}Z`;
+  const hl=(v,c,t)=>`<line x1="${L}" x2="${W-R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${c}" stroke-dasharray="5 5" stroke-opacity=".8"/><text x="${W-R}" y="${(Y(v)-5).toFixed(1)}" text-anchor="end" style="fill:${c}">${t} ${usd(v)}</text>`;
+  const grid=[0,.5,1].map(f=>{const v=lo+(hi-lo)*f; return `<line x1="${L}" x2="${W-R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--line)"/><text x="${L-8}" y="${(Y(v)+4).toFixed(1)}" text-anchor="end">${usd(v)}</text>`;}).join('');
+  return `<div class="eq"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Egyenleg-görbe ${ks[0]} és ${ks[ks.length-1]} között, most ${usd(a.egyenleg)}"><defs><linearGradient id="eqg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--ph)" stop-opacity=".35"/><stop offset="1" stop-color="var(--ph)" stop-opacity="0"/></linearGradient></defs>
+    ${grid}${a.padlo!=null&&a.allapot==='aktív'?hl(a.padlo,'var(--floor)','padló'):''}${goal!=null?hl(goal,'var(--gold)','cél'):''}
+    <path d="${area}" fill="url(#eqg)"/><path d="${line}" fill="none" stroke="var(--ph)" stroke-width="2" style="filter:drop-shadow(0 0 5px var(--ph))"/>
+    ${pts.map((p,i)=>i?`<circle cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${pts.length>40?0:3}" fill="var(--void)" stroke="var(--ph)" stroke-width="1.500"><title>${p.d}: ${usd(p.v)}</title></circle>`:'').join('')}
+    <text x="${L}" y="${H-6}">${ks[0]}</text><text x="${W-R}" y="${H-6}" text-anchor="end">${ks[ks.length-1]}</text></svg></div>`;
+}
 function accts(){return S.data?S.data.szamlak:[];}
 function sel(){return accts().find(a=>a.id===S.sel);}
 
@@ -238,11 +294,11 @@ function payFlag(a){
 function card(a){
   const on=S.sel===a.id, act=a.allapot==='aktív', pay=a.kifizetheto&&a.kifizetheto.lehet;
   const kv=a.fazis==='eval'&&act
-    ? [['Célig',usd(a.cel_hatra)],['Párna',usd(a.parna)],['Ma',`<span class="${cls(a.ma)}">${sgn(a.ma)}</span>`]]
-    : [['Párna',act?usd(a.parna):'–'],['Kifizetve',usd(a.kapott)],['Ma',act?`<span class="${cls(a.ma)}">${sgn(a.ma)}</span>`:'–']];
+    ? [[ic('target')+'Célig',usd(a.cel_hatra)],[ic('shield')+'Párna',usd(a.parna)],[ic('today')+'Ma',`<span class="${cls(a.ma)}">${sgn(a.ma)}</span>`]]
+    : [[ic('shield')+'Párna',act?usd(a.parna):'–'],[ic('payout')+'Kifizetve',usd(a.kapott)],[ic('today')+'Ma',act?`<span class="${cls(a.ma)}">${sgn(a.ma)}</span>`:'–']];
   return `<div class="cw ${phCls(a)} ${on?'on':''} ${act?'':'off'} ${pay?'pay':''}"><button type="button" class="card" aria-pressed="${on}" data-id="${esc(a.id)}">
-    <div class="hd"><div><div class="firm">${esc(a.ceg)}</div><div class="plan">${esc(a.csomag)}, ${esc(short(a.id))}</div></div>${chip(a)}</div>
-    <div class="core">${gauge(a)}<div><div class="bal">${usd(a.egyenleg)}</div><div class="sub">Eredmény <b class="${cls(a.pnl)}">${sgn(a.pnl)}</b></div>${act&&a.padlo!=null?`<div class="sub">Padló <span class="neg">${usd(a.padlo)}</span>${a.fazis==='eval'&&a.cel?`, cél ${usd(a.kezdo+a.cel)}`:''}</div>`:''}${a.nyitott?`<div class="sub">${a.nyitott} nyitott pozíció</div>`:''}</div></div>
+    <div class="hd"><div class="who">${emblem(a)}<div style="min-width:0"><div class="firm">${esc(a.ceg)}</div><div class="plan">${esc(a.csomag)}, ${esc(short(a.id))}</div></div></div>${chip(a)}</div>
+    <div class="core">${gauge(a)}<div><div class="bal">${usd(a.egyenleg)}</div><div class="sub">Eredmény <b class="${cls(a.pnl)}">${sgn(a.pnl)}</b></div>${act&&a.padlo!=null?`<div class="sub">Padló <span class="neg">${usd(a.padlo)}</span>${a.fazis==='eval'&&a.cel?`, cél ${usd(a.kezdo+a.cel)}`:''}</div>`:''}${a.nyitott?`<div class="sub">${a.nyitott} nyitott pozíció</div>`:''}${dayBars(a)}</div></div>
     <div class="kv">${kv.map(([k,v])=>`<span><span class="k">${k}</span><span class="v">${v}</span></span>`).join('')}</div>
     ${payFlag(a)}
     <div class="ft"><span>Ára ${a.ar_ismert?usd(a.koltes):'nincs megadva'}</span><span>${a.kifizetesek.length?a.kifizetesek.length+' kifizetés, '+usd(a.kapott):'még nincs kifizetés'}</span></div>
@@ -252,10 +308,10 @@ const ORB={t0:performance.now(),raf:0,nodes:[]};
 function renderSum(){
   const o=S.data.osszesen, A=accts();
   $('huds').innerHTML=[
-    ['tl','--funded','Elköltve',usd(o.koltes),`${A.length} fiók`+(o.ar_hianyzik.length?`, ${o.ar_hianyzik.length} ára hiányzik`:'')],
-    ['tr','--gold','Kifizetve neked',usd(o.kapott),o.kifizetes_db?`${o.kifizetes_db} kifizetés`:'még nincs kifizetés'],
-    ['bl','--eval','Aktív számlák',o.aktiv,`${o.aktiv-o.funded} eval, ${o.funded} funded`+(o.bukott?`, ${o.bukott} bukott`:'')],
-    ['br','--gold','Most kérhető',usd(o.kifizetheto),o.kifizetheto>0?'kifizetés vár rád':'nincs kérhető kifizetés']
+    ['tl','--funded',ic('spend')+'Elköltve',usd(o.koltes),`${A.length} fiók`+(o.ar_hianyzik.length?`, ${o.ar_hianyzik.length} ára hiányzik`:'')],
+    ['tr','--gold',ic('payout')+'Kifizetve neked',usd(o.kapott),o.kifizetes_db?`${o.kifizetes_db} kifizetés`:'még nincs kifizetés'],
+    ['bl','--eval',ic('fleet')+'Aktív számlák',o.aktiv,`${o.aktiv-o.funded} eval, ${o.funded} funded`+(o.bukott?`, ${o.bukott} bukott`:'')],
+    ['br','--gold',ic('ready')+'Most kérhető',usd(o.kifizetheto),o.kifizetheto>0?'kifizetés vár rád':'nincs kérhető kifizetés']
   ].map(([p,c,k,v,s])=>`<div class="hud ${p}" style="--c:var(${c})"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join('');
   const P=A.filter(a=>a.kifizetheto&&a.kifizetheto.lehet);
   $('paybar').innerHTML=P.length?`<div class="paybar" role="status"><span class="coin"></span><span><b>Kifizetés kérhető</b> ${P.map(a=>`${esc(a.ceg)} ${esc(short(a.id))}: ${usd(a.kifizetheto.osszeg)}`).join(', ')}. Összesen neked <b>${usd(o.kifizetheto)}</b>.</span><button type="button" data-id="${esc(P[0].id)}">Megnézem</button></div>`:'';
@@ -264,6 +320,7 @@ function renderSum(){
 }
 // pályarendszer: középen a mérleg; belső pálya = funded, középső = eval, külső = lezárt fiókok. A bolygó színe a fázis, arany gyűrű = kérhető kifizetés.
 function renderOrbit(){
+  if(window.Fleet3D&&window.Fleet3D.ok){ $('orbit').style.display='none'; $('scene').hidden=false; window.Fleet3D.update(S.data,S.sel); return; }
   const o=S.data.osszesen, A=accts(), sv=$('orbit'), M=matchMedia('(max-width:720px)').matches, CX=500, CY=M?190:200, K=M?0.42:0.36;
   const rings=M?[['funded',90,'var(--funded)'],['eval',150,'var(--eval)'],['off',198,'var(--muted)']]:[['funded',185,'var(--funded)'],['eval',305,'var(--eval)'],['off',425,'var(--muted)']];
   sv.setAttribute('viewBox',M?'290 82 420 216':'0 0 1000 400'); ORB.M=M;
@@ -330,28 +387,30 @@ function renderDetail(){
   const net=a.kapott-a.koltes;
   el.innerHTML=`
   <div class="panel" style="display:flex;flex-direction:column;gap:18px">
-    <div class="dhead"><div><h2>${esc(a.ceg)} ${esc(a.csomag)}</h2><div class="muted" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${chip(a)}<span>${esc(a.id)}</span>${a.vasarolva?'<span>vásárolva '+a.vasarolva+'</span>':''}</div></div><button class="btn" type="button" id="closeD">Bezárás</button></div>
+    <div class="dhead"><div style="display:flex;gap:14px;align-items:center">${emblem(a)}<div><h2>${esc(a.ceg)} ${esc(a.csomag)}</h2><div class="muted" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${chip(a)}<span>${esc(a.id)}</span>${a.vasarolva?'<span>vásárolva '+a.vasarolva+'</span>':''}</div></div></div><button class="btn" type="button" id="closeD">Bezárás</button></div>
     <div class="kpis">${kp.map(([l,v,c])=>`<div><span>${l}</span><b class="${c}">${v}</b></div>`).join('')}</div>
   </div>
   <div class="grid" style="margin-top:20px">
     <div class="panel">
-      <h3><span>Napi eredmény</span><span class="calnav"><button type="button" id="mPrev" aria-label="Előző hónap">‹</button><small style="min-width:120px;text-align:center">${C.label}</small><button type="button" id="mNext" aria-label="Következő hónap">›</button></span></h3>
+      <h3><span>${ic('cal')}Napi eredmény</span><span class="calnav"><button type="button" id="mPrev" aria-label="Előző hónap">‹</button><small style="min-width:120px;text-align:center">${C.label}</small><button type="button" id="mNext" aria-label="Következő hónap">›</button></span></h3>
       <div class="cal" id="cal">${C.html}</div>
       <p class="msum">${C.sum}</p>
+      <h3 style="margin-top:22px"><span>${ic('chart')}Egyenleg</span><small>a napi zárások alapján</small></h3>
+      ${equityChart(a)}
     </div>
     <div class="side">
-      ${k?`<div class="panel"><h3><span>Kifizetés</span><small>${k.hanyadik?k.hanyadik+'. kifizetés':''}</small></h3>
+      ${k?`<div class="panel"><h3><span>${ic('payout')}Kifizetés</span><small>${k.hanyadik?k.hanyadik+'. kifizetés':''}</small></h3>
         ${k.lehet?`<div class="payflag" style="margin-bottom:12px"><i></i>Most kérhető: ${usd(k.osszeg)}, ebből neked ${usd(k.kapnal)}</div>`:''}
         <ul class="check">${k.feltetelek.map(f=>`<li class="${f.ok?'ok':''}"><span class="m"><span>${f.ok?'✓':''}</span></span><span>${esc(f.szoveg)}</span></li>`).join('')}</ul></div>`
-      :(a.fazis==='eval'&&a.allapot==='aktív'?`<div class="panel"><h3>Kifizetés</h3><div class="empty">Eval fázisban nincs kifizetés. A célig még ${usd(a.cel_hatra)} hiányzik.</div></div>`:'')}
-      <div class="panel"><h3>Pénzügyek</h3><table class="ledger"><tbody>${led.map(([l,v])=>`<tr><td>${l}</td><td class="${v==null?'muted':cls(v)}">${v==null?'nincs megadva':sgn(v,1)}</td></tr>`).join('')}<tr class="tot"><td>Mérleg ezen a fiókon</td><td class="${cls(net)}">${sgn(net,1)}</td></tr></tbody></table></div>
-      <div class="panel"><h3>Szabályok</h3><table class="ledger"><tbody>
+      :(a.fazis==='eval'&&a.allapot==='aktív'?`<div class="panel"><h3><span>${ic('payout')}Kifizetés</span></h3><div class="empty">Eval fázisban nincs kifizetés. A célig még ${usd(a.cel_hatra)} hiányzik.</div></div>`:'')}
+      <div class="panel"><h3><span>${ic('book')}Pénzügyek</span></h3><table class="ledger"><tbody>${led.map(([l,v])=>`<tr><td>${l}</td><td class="${v==null?'muted':cls(v)}">${v==null?'nincs megadva':sgn(v,1)}</td></tr>`).join('')}<tr class="tot"><td>Mérleg ezen a fiókon</td><td class="${cls(net)}">${sgn(net,1)}</td></tr></tbody></table></div>
+      <div class="panel"><h3><span>${ic('rules')}Szabályok</span></h3><table class="ledger"><tbody>
         ${a.cel?`<tr><td>Profit-cél</td><td>${usd(a.cel)}</td></tr>`:''}${a.mll?`<tr><td>Max veszteség (padló ${usd(a.padlo)})</td><td>${usd(a.mll)}</td></tr>`:''}${a.napi_limit?`<tr><td>Napi limit</td><td>${usd(a.napi_limit)}</td></tr>`:''}${a.max_mini?`<tr><td>Max méret</td><td>${a.max_mini} mini / ${a.max_mini*10} mikro</td></tr>`:''}${a.szabaly&&a.szabaly.ejszaka===false?`<tr><td>Éjszakán át tartás</td><td>nem</td></tr>`:''}
       </tbody></table></div>
     </div>
   </div>
   <div class="panel" style="margin-top:20px">
-    <h3><span>Kötések${S.day?', '+dLabel(S.day):''}</span><small>${S.day?'<a href="#" id="clrDay">minden nap</a>':`${a.trade_db} kötés összesen, a legutóbbiak elöl`}</small></h3>
+    <h3><span>${ic('trades')}Kötések${S.day?', '+dLabel(S.day):''}</span><small>${S.day?'<a href="#" id="clrDay">minden nap</a>':`${a.trade_db} kötés összesen, a legutóbbiak elöl`}</small></h3>
     ${T.length?`<div class="tblwrap"><table class="tr"><thead><tr><th>Idő (New York)</th><th>Kontraktus</th><th>Oldal</th><th class="r">Db</th><th class="r">Ár</th><th class="r">Eredmény (díjjal)</th></tr></thead><tbody>${T.map(t=>`<tr><td>${t.t?tf.format(new Date(t.t.replace(/(\.\d{3})\d+/,'$1'))):esc(t.nap)}</td><td>${esc(t.k||'–')}</td><td>${t.o==='buy'?'vétel':t.o==='sell'?'eladás':'–'}</td><td class="r">${t.db==null?'–':t.db}</td><td class="r">${t.ar==null?'–':nf2.format(t.ar)}</td><td class="r ${cls(t.pnl)}">${sgn(t.pnl,1)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Még nincs kötés.</div>'}
   </div>`;
   $('closeD').onclick=()=>pick(a.id,'close');
@@ -381,7 +440,82 @@ async function load(){
   addEventListener('resize',size); size(); if(!still){ raf=requestAnimationFrame(loop); document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); } }); }
 })();
 matchMedia('(max-width:720px)').addEventListener('change',()=>{ if(S.data) renderOrbit(); });
+window.__fmt={usd,sgn,esc}; window.__pick=(id,sc)=>pick(id,sc); window.__fleetReady=()=>{ if(S.data) renderOrbit(); };
 load(); setInterval(load,60000);
+</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script type="module">
+// 3D flotta: izzó mag (a mérleg), három pálya, a számlák megvilágított bolygók. Funded = gyűrűs bolygó, kérhető kifizetés = arany gyűrű, lezárt = kis törmelék a külső pályán.
+// Húzással forgatható; csökkentett mozgásnál áll. Ha a WebGL nem megy, az oldal az SVG-változatot mutatja.
+import * as THREE from 'three';
+const host=document.getElementById('scene'), lab=document.getElementById('plabels'), still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+try{
+  const R=new THREE.WebGLRenderer({antialias:true,alpha:true}); R.setPixelRatio(Math.min(devicePixelRatio||1,2)); host.insertBefore(R.domElement,lab);
+  const scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(36,2,.1,200), root=new THREE.Group(); scene.add(root);
+  const COL={eval:0x9B7BFF,funded:0x3DF2FF,gold:0xFFC94A,bust:0xFF5C8A,off:0x6E7FAE,pos:0x4DFFC0,neg:0xFF6B94};
+  const glowTex=(()=>{const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d'), g=x.createRadialGradient(64,64,0,64,64,64); g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.22,'rgba(255,255,255,.55)'); g.addColorStop(1,'rgba(255,255,255,0)'); x.fillStyle=g; x.fillRect(0,0,128,128); return new THREE.CanvasTexture(c);})();
+  const glow=(col,sc,op=1)=>{const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:col,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false})); s.scale.set(sc,sc,1); return s;};
+  // mag
+  const core=new THREE.Group(); root.add(core);
+  const coreBall=new THREE.Mesh(new THREE.SphereGeometry(.5,48,32),new THREE.MeshBasicMaterial({color:0xffffff})); core.add(coreBall);
+  const coreGlow=glow(COL.pos,4.6,.85); core.add(coreGlow);
+  const cage=new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(1.05,1)),new THREE.LineBasicMaterial({color:COL.pos,transparent:true,opacity:.45})); core.add(cage);
+  const gy=[0,1].map(i=>{const m=new THREE.Mesh(new THREE.TorusGeometry(1.45+i*.28,.012,8,120),new THREE.MeshBasicMaterial({color:0xDCE8FF,transparent:true,opacity:.5})); m.rotation.x=1.1+i*.7; m.rotation.y=i*.9; core.add(m); return m;});
+  const light=new THREE.PointLight(0xffffff,60,0,1.6); root.add(light); scene.add(new THREE.AmbientLight(0x8090c0,.55));
+  // pályák
+  const RAD={funded:3.4,eval:5.5,off:7.5}, SPD={funded:.085,eval:.055,off:.026};
+  const ringOf=(r,col,op,dash)=>{const pts=[]; for(let i=0;i<=256;i++){const a=i/256*Math.PI*2; pts.push(new THREE.Vector3(Math.cos(a)*r,0,Math.sin(a)*r));} const g=new THREE.BufferGeometry().setFromPoints(pts);
+    const l=new THREE.Line(g,dash?new THREE.LineDashedMaterial({color:col,transparent:true,opacity:op,dashSize:.12,gapSize:.22}):new THREE.LineBasicMaterial({color:col,transparent:true,opacity:op})); if(dash) l.computeLineDistances(); root.add(l); return l;};
+  const rings={funded:ringOf(RAD.funded,COL.funded,.5),eval:ringOf(RAD.eval,COL.eval,.5),off:ringOf(RAD.off,COL.off,.4,true)};
+  for(const k of ['funded','eval']) for(let i=0;i<48;i++){ const a=i/48*Math.PI*2, r=RAD[k], t=new THREE.Mesh(new THREE.BoxGeometry(.02,.02,i%4?.1:.22),new THREE.MeshBasicMaterial({color:COL[k],transparent:true,opacity:.55})); t.position.set(Math.cos(a)*r,0,Math.sin(a)*r); t.lookAt(0,0,0); root.add(t); }
+  let planets=[], coreEl=null; const TR=44;
+  function build(D,selId){
+    for(const p of planets){ root.remove(p.g); root.remove(p.trail); p.el.remove(); } planets=[]; lab.innerHTML='';
+    const o=D.osszesen, pc=o.netto>=0?COL.pos:COL.neg; coreGlow.material.color.setHex(pc); cage.material.color.setHex(pc);
+    coreEl=document.createElement('div'); coreEl.className='corelabel'; coreEl.innerHTML=`<b style="color:${o.netto>=0?'var(--pos)':'var(--neg)'}">${window.__fmt.sgn(o.netto)}</b><span>mérleg: kifizetés − költés</span>`; lab.appendChild(coreEl);
+    const grp={funded:[],eval:[],off:[]}; for(const a of D.szamlak) grp[a.allapot!=='aktív'?'off':(a.fazis==='eval'?'eval':'funded')].push(a);
+    for(const k of ['funded','eval','off']){ rings[k].material.opacity=grp[k].length?(k==='off'?.4:.6):.18;
+      grp[k].forEach((a,i)=>{ const g=new THREE.Group(), pay=a.kifizetheto&&a.kifizetheto.lehet, col=a.allapot==='bukott'?COL.bust:COL[k];
+        if(k==='off'){ const m=new THREE.Mesh(new THREE.OctahedronGeometry(.17,0),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.5,roughness:.6,flatShading:true})); g.add(m); g.add(glow(col,.9,.5)); g.userData.spin=m; }
+        else{ const m=new THREE.Mesh(new THREE.SphereGeometry(.36,40,28),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.28,roughness:.42,metalness:.25})); g.add(m); g.add(glow(col,2.1,.55));
+          const band=new THREE.Mesh(new THREE.TorusGeometry(.365,.012,6,60),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35})); band.rotation.x=Math.PI/2; g.add(band);
+          if(k==='funded'){ const t=new THREE.Mesh(new THREE.RingGeometry(.52,.72,64),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.5,side:THREE.DoubleSide})); t.rotation.x=Math.PI/2-.35; t.rotation.y=.25; g.add(t); }
+          if(pay){ const t=new THREE.Mesh(new THREE.TorusGeometry(.95,.022,8,90),new THREE.MeshBasicMaterial({color:COL.gold})); t.rotation.x=Math.PI/2; g.add(t); g.add(glow(COL.gold,3.2,.5)); g.userData.pay=t; }
+          if(a.id===selId){ const t=new THREE.Mesh(new THREE.TorusGeometry(1.18,.014,8,90),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.9})); t.rotation.x=Math.PI/2; g.add(t); }
+          g.userData.spin=m; }
+        const hit=new THREE.Mesh(new THREE.SphereGeometry(k==='off'?.5:.95,12,8),new THREE.MeshBasicMaterial({visible:false})); hit.userData.id=a.id; g.add(hit); root.add(g);
+        const tg=new THREE.BufferGeometry(); tg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(TR*3),3)); const cc=new Float32Array(TR*3), c3=new THREE.Color(col); for(let j=0;j<TR;j++){ const f=Math.pow(1-j/(TR-1),1.6); cc[j*3]=c3.r*f; cc[j*3+1]=c3.g*f; cc[j*3+2]=c3.b*f; } tg.setAttribute('color',new THREE.BufferAttribute(cc,3));
+        const trail=new THREE.Line(tg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,linewidth:2})); trail.visible=k!=='off'; root.add(trail);
+        const el=document.createElement('div'); el.className='plabel'+(pay?' pay':''); el.style.setProperty('--c',a.allapot==='bukott'?'var(--floor)':k==='funded'?'var(--funded)':k==='eval'?'var(--eval)':'var(--muted)');
+        el.innerHTML=k==='off'?'':`<b>${window.__fmt.esc(a.ceg)}</b><span>${pay?'Kifizetés kérhető: '+window.__fmt.usd(a.kifizetheto.osszeg):(a.fazis==='eval'?'Eval':'Funded')+', '+window.__fmt.usd(a.egyenleg)}</span>`; lab.appendChild(el);
+        planets.push({g,hit,trail,el,k,r:RAD[k],ph:i/grp[k].length*Math.PI*2+(k==='eval'?.6:k==='off'?3.4:5.2),sp:SPD[k]}); }); }
+    frame(performance.now(),true);
+  }
+  // nézet
+  let rotY=0, rotX=0, tgtY=0, tgtX=0, drag=null, W=0, H=0;
+  function size(){ W=host.clientWidth; H=host.clientHeight; if(!W||!H) return; R.setSize(W,H,false); cam.aspect=W/H; const z=10.6*Math.max(1,Math.min(2.3/cam.aspect,1.32)); cam.position.set(0,z*.44,z); cam.lookAt(0,-.55,0); cam.updateProjectionMatrix(); frame(performance.now(),true); }
+  const v=new THREE.Vector3(); const proj=(obj,dy=0)=>{ obj.getWorldPosition(v); v.y+=dy; v.project(cam); return [(v.x*.5+.5)*W,(-v.y*.5+.5)*H]; };
+  let raf=0, t0=performance.now();
+  function frame(now,once){
+    const t=(now-t0)/1000; rotY+=(tgtY-rotY)*.08; rotX+=(tgtX-rotX)*.08; root.rotation.y=rotY+(still?0:t*.02); root.rotation.x=rotX;
+    cage.rotation.y=t*.25; cage.rotation.x=t*.13; gy[0].rotation.z=t*.5; gy[1].rotation.z=-t*.36; coreGlow.scale.setScalar(4.6+Math.sin(t*1.6)*.3);
+    for(const p of planets){ const a=p.ph+(still?0:t*p.sp); p.g.position.set(Math.cos(a)*p.r,0,Math.sin(a)*p.r); if(p.g.userData.spin) p.g.userData.spin.rotation.y=t*.6; if(p.g.userData.pay) p.g.userData.pay.scale.setScalar(1+Math.sin(t*3)*.07);
+      const pos=p.trail.geometry.attributes.position; for(let j=0;j<TR;j++){ const b=a-j*.022*(5.5/p.r+.6); pos.setXYZ(j,Math.cos(b)*p.r,0,Math.sin(b)*p.r); } pos.needsUpdate=true; }
+    R.render(scene,cam);
+    for(const p of planets){ const [x,y]=proj(p.g), left=x>W*.72; p.el.classList.toggle('left',left); p.el.style.transform=`translate(${left?x-22:x+22}px,${y-18}px)`+(left?' translateX(-100%)':''); p.el.style.display=W<560||x<0||x>W?'none':''; }
+    if(coreEl){ const [x,y]=proj(core,-1.75); coreEl.style.transform=`translate(${x}px,${y}px) translateX(-50%)`; }
+    if(!once&&!still&&!document.hidden) raf=requestAnimationFrame(frame);
+  }
+  const ray=new THREE.Raycaster(), m2=new THREE.Vector2(); const pickAt=e=>{ const r=host.getBoundingClientRect(); m2.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1); ray.setFromCamera(m2,cam); const h=ray.intersectObjects(planets.map(p=>p.hit),false)[0]; return h?h.object.userData.id:null; };
+  host.addEventListener('pointerdown',e=>{ drag={x:e.clientX,y:e.clientY,ry:tgtY,rx:tgtX,moved:false}; host.setPointerCapture(e.pointerId); });
+  host.addEventListener('pointermove',e=>{ if(drag){ const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.abs(dx)+Math.abs(dy)>4) drag.moved=true; tgtY=drag.ry+dx*.006; tgtX=Math.max(-.35,Math.min(.5,drag.rx+dy*.004)); if(still) frame(performance.now(),true); } else host.style.cursor=pickAt(e)?'pointer':'grab'; });
+  host.addEventListener('pointerup',e=>{ const d=drag; drag=null; if(d&&!d.moved){ const id=pickAt(e); if(id) window.__pick(id,true); } });
+  host.addEventListener('pointercancel',()=>{drag=null;});
+  new ResizeObserver(size).observe(host);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&!still){ cancelAnimationFrame(raf); raf=requestAnimationFrame(frame); } });
+  window.Fleet3D={ok:true,update(D,selId){ host.hidden=false; size(); build(D,selId); cancelAnimationFrame(raf); if(!still) raf=requestAnimationFrame(frame); }};
+  if(window.__fleetReady) window.__fleetReady();
+}catch(e){ console.warn('3D nem indult, marad az SVG:',e); }
 </script>
 </body>
 </html>
