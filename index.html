@@ -12,7 +12,7 @@
    a kártyák letört sarkú holo-panelek gyűrűs műszerrel. Csak sötét. Szerepek: eval = ion-ibolya, funded = plazma-cián, kifizetés = arany, veszteség / padló = rózsavörös, nyereség = menta. */
 :root{
   --void:#04060F; --deep:#080C1E; --panel:#0B1228; --panel-2:#101A38; --ink:#DCE8FF; --muted:#8493BD; --line:#1C2850; --line-2:#2D3E78;
-  --eval:#9B7BFF; --funded:#3DF2FF; --gold:#FFC94A; --floor:#FF5C8A; --pos:#4DFFC0; --neg:#FF6B94;
+  --eval:#9B7BFF; --funded:#3DF2FF; --paper:#B9C6EA; --gold:#FFC94A; --floor:#FF5C8A; --pos:#4DFFC0; --neg:#FF6B94;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -92,7 +92,7 @@ h1,h2,h3,.dsp{font-family:"Chakra Petch","Exo 2",sans-serif;margin:0;letter-spac
 .sec-h small{color:var(--muted);font-size:13px}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
 .cw{--ph:var(--eval);min-width:0;filter:drop-shadow(0 0 0 transparent);transition:filter .2s}
-.cw.funded,.cw.live{--ph:var(--funded)} .cw.bust{--ph:var(--floor)} .cw.done{--ph:var(--line-2)} .cw.pay{--ph2:var(--gold)}
+.cw.funded,.cw.live{--ph:var(--funded)} .cw.papir{--ph:var(--paper)} .cw.papir .bal.pos{color:var(--pos)} .cw.papir .bal.neg{color:var(--neg)} .cw.bust{--ph:var(--floor)} .cw.done{--ph:var(--line-2)} .cw.pay{--ph2:var(--gold)}
 .cw:hover{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--ph) 45%,transparent))}
 .cw.on{filter:drop-shadow(0 0 20px color-mix(in srgb,var(--ph) 70%,transparent))}
 .cw.pay{filter:drop-shadow(0 0 16px rgba(255,201,74,.55))}
@@ -148,7 +148,7 @@ h1,h2,h3,.dsp{font-family:"Chakra Petch","Exo 2",sans-serif;margin:0;letter-spac
 .panel::before{content:"";position:absolute;left:0;top:0;width:54px;height:2px;background:var(--ph,var(--funded));box-shadow:0 0 12px var(--ph,var(--funded))}
 .panel h3{margin:0 0 14px;font-size:17px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .panel h3 small{font-size:13px;font-weight:400;font-family:"Exo 2",sans-serif;color:var(--muted)}
-#detail{--ph:var(--eval)} #detail.funded,#detail.live{--ph:var(--funded)}
+#detail{--ph:var(--eval)} #detail.funded,#detail.live{--ph:var(--funded)} #detail.papir{--ph:var(--paper)}
 .dhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
 .dhead h2{font-size:27px;font-weight:700}
 .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0}
@@ -234,7 +234,7 @@ dialog#pinDlg::backdrop{background:rgba(4,6,15,.78)}
       <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="20" rx="18" ry="7" fill="none" stroke="#3DF2FF" stroke-width="1.4" transform="rotate(-24 20 20)"/><ellipse cx="20" cy="20" rx="18" ry="7" fill="none" stroke="#9B7BFF" stroke-width="1.4" transform="rotate(38 20 20)"/><circle cx="20" cy="20" r="4.5" fill="#FFC94A"/></svg>
       <div><h1>Számla-flotta</h1><p class="lede">A prop-fiókok állapota, napi eredménye, kifizetései és az eddigi költés.</p></div>
     </div>
-    <div class="tools"><span class="upd" id="upd"></span><a class="btn" href="botok">Papír-botok</a></div>
+    <div class="tools"><span class="upd" id="upd"></span><a class="btn" id="navResults" href="?nez=eredmenyek">Eredmények</a><a class="btn" href="botok">Papír-botok</a></div>
   </header>
   <div id="err"></div>
   <section class="hero" aria-label="A flotta áttekintése">
@@ -254,8 +254,12 @@ dialog#pinDlg::backdrop{background:rgba(4,6,15,.78)}
     <div class="row"><button class="btn" type="button" id="pinNo">Mégse</button><button class="btn" type="submit" id="pinOk">Küldés</button></div>
   </form></dialog>
   <section>
-    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>Számlák</h2><small id="actNote"></small></div>
+    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span id="secTitle">Számlák</span></h2><small id="actNote"></small></div>
     <div class="cards" id="cards" style="margin-top:12px"></div>
+  </section>
+  <section id="paperSec" hidden>
+    <div class="sec-h"><h2><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/></svg>Papír-könyvek</h2><small>Nem valódi pénz. A bot a két könyvet papíron kereskedi az élő beállítás ×1 méretén, cég-szabályok nélkül.</small></div>
+    <div class="cards" id="pcards" style="margin-top:12px"></div>
   </section>
   <section id="detail" hidden></section>
   <section id="closedSec" hidden>
@@ -267,7 +271,7 @@ dialog#pinDlg::backdrop{background:rgba(4,6,15,.78)}
 <script>
 const DATA_URL='https://rfmmwzrgxxcaknufcfui.supabase.co/storage/v1/object/public/paper/accounts.json';
 const CTL_URL='https://rfmmwzrgxxcaknufcfui.supabase.co/storage/v1/object/public/paper/control.json';
-const S={data:null,sel:null,month:null,day:null,ctl:null,pin:null,busy:false};
+const S={data:null,sel:null,month:null,day:null,ctl:null,pin:null,busy:false,view:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const grp=(x,d)=>{const [a,b]=Math.abs(x).toFixed(d).split('.'); return a.replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0')+(b?','+b:'');};
@@ -275,7 +279,7 @@ const nf0={format:x=>grp(x,0)}, nf2={format:x=>grp(x,2)};
 const usd=(v,d)=>v==null||isNaN(v)?'–':(v<0?'−':'')+'$'+(d?nf2:nf0).format(Math.abs(v));
 const sgn=(v,d)=>v==null||isNaN(v)?'–':(v>0?'+':v<0?'−':'')+'$'+(d?nf2:nf0).format(Math.abs(v));
 const cls=v=>v>0?'pos':v<0?'neg':'';
-const PH={eval:'Eval',funded:'Funded',live:'Élő'};
+const PH={eval:'Eval',funded:'Funded',live:'Élő',papir:'Papír'};
 const short=id=>{const s=String(id); return s.length>10?'…'+s.slice(-6):s;};
 const todayNY=()=>{const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hour12:false}).formatToParts(new Date()); const g=k=>p.find(x=>x.type===k).value; let d=new Date(`${g('year')}-${g('month')}-${g('day')}T12:00:00`); if(+g('hour')>=18) d.setDate(d.getDate()+1); return d.toISOString().slice(0,10);};
 const dLabel=iso=>new Date(iso+'T12:00:00').toLocaleDateString('hu-HU',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
@@ -318,7 +322,8 @@ function equityChart(a){
     <text x="${L}" y="${H-6}">${ks[0]}</text><text x="${W-R}" y="${H-6}" text-anchor="end">${ks[ks.length-1]}</text></svg></div>`;
 }
 function accts(){return S.data?S.data.szamlak:[];}
-function sel(){return accts().find(a=>a.id===S.sel);}
+function papers(){return (S.data&&S.data.papir)||[];}
+function sel(){return accts().concat(papers()).find(a=>a.id===S.sel);}
 
 function phCls(a){ return a.allapot==='passzolt'?'passed':a.allapot==='bukott'?'bust':a.allapot!=='aktív'?'done':a.fazis; }
 function chip(a){
@@ -389,7 +394,7 @@ function renderSum(){
 // cián = megbízás a fiók felé (csak ahol bot kereskedik), menta = visszajövő adat. Funded = nagy csomópont; átment eval = kis arany csomópont, szaggatott vonallal a belőle lett fundedhez.
 const NET={sig:''};
 function renderOrbit(){
-  const o=S.data.osszesen, A=accts(), sv=$('orbit'), M=matchMedia('(max-width:720px)').matches, still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const o=S.data.osszesen, A=accts().filter(a=>a.allapot!=='bukott'), sv=$('orbit'), M=matchMedia('(max-width:720px)').matches, still=matchMedia('(prefers-reduced-motion: reduce)').matches;
   $('scene').hidden=true; sv.style.display='';
   const CX=500, CY=M?250:205, piOn=ctlFresh(), bots=(S.ctl&&S.ctl.botok)||{}, nBot=Object.keys(bots).filter(k=>bots[k].fut).length;
   const BN={hyperprop:'Hyperprop',topstep:'TopstepX','kézi':'Kézi fiókok'}, grp={}; for(const a of A) (grp[a.forras||'kézi']=grp[a.forras||'kézi']||[]).push(a);
@@ -464,11 +469,36 @@ function renderOrbit(){
   sv.setAttribute('viewBox',M?'300 30 400 '+(keys.length?510:330):'0 0 1000 410'); sv.innerHTML=h;
   sv.querySelectorAll('.node').forEach(g=>{ const f=()=>pick(g.dataset.id,true); g.onclick=f; g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f();}}; });
 }
+// papír-könyv kártya: nincs egyenleg, padló vagy cél, csak a könyv eredménye
+function pcard(a){
+  const on=S.sel===a.id, dv=Object.values(a.napok||{}), win=dv.filter(v=>v.pnl>0).length;
+  const st=!a.bot_el?'A bot nem ad életjelet':a.nyitott?a.nyitott+' nyitott pozíció':a.fuggo?a.fuggo+' függő megbízás':'A bot fut, nincs nyitott pozíció';
+  return `<div class="cw papir ${on?'on':''} ${a.bot_el?'':'off'}"><button type="button" class="card" aria-pressed="${on}" data-id="${esc(a.id)}">
+    <div class="hd"><div class="who">${emblem({ceg:a.csomag})}<div style="min-width:0"><div class="firm">${esc(a.csomag)}</div><div class="plan">${esc(a.labak_nev||'')}</div></div></div>${chip(a)}</div>
+    <div><div class="bal ${cls(a.pnl)}">${sgn(a.pnl)}</div><div class="sub">${a.indult?'Eredmény '+esc(a.indult)+' óta':'Még nincs kötés'}</div>${dayBars(a)}</div>
+    <div class="kv">${[[ic('today')+'Ma',`<span class="${cls(a.ma)}">${sgn(a.ma)}</span>`],[ic('cal')+'Nyerő napok',dv.length?`${win} / ${dv.length}`:'–'],[ic('trades')+'Kötések',a.trade_db]].map(([k,v])=>`<span><span class="k">${k}</span><span class="v">${v}</span></span>`).join('')}</div>
+    <div class="ft"><span>${st}</span><span>×1 méret</span></div>
+  </button></div>`;
+}
 function renderCards(){
-  const A=accts(), won=A.filter(a=>a.allapot==='passzolt'), act=A.filter(a=>a.allapot==='aktív').sort((x,y)=>(x.fazis==='eval')-(y.fazis==='eval')).concat(won), cl=A.filter(a=>a.allapot!=='aktív'&&a.allapot!=='passzolt');
-  $('cards').innerHTML=act.length?act.map(card).join(''):'<div class="empty">Nincs aktív számla.</div>';
-  $('actNote').textContent=act.length?'Kattints egy kártyára a naptárért és a részletekért.':'';
-  $('closedSec').hidden=!cl.length; $('closed').innerHTML=cl.map(card).join('');
+  const A=accts(), view=S.view, hasPay=a=>((a.kifizetesek&&a.kifizetesek.length)||a.kapott>0), nav=$('navResults'), tt=$('secTitle');
+  if(view==='eredmenyek'){   // külön nézet: átment evalok + payoutos fiókok; bukott itt sem látszik
+    if(nav){ nav.textContent='\u2190 Flotta'; nav.setAttribute('href','./'); }
+    if(tt) tt.textContent='Eredmények';
+    const R=A.filter(a=>a.allapot==='passzolt'||hasPay(a)).sort((x,y)=>(y.kapott||0)-(x.kapott||0));
+    $('cards').innerHTML=R.length?R.map(card).join(''):'<div class="empty">Még nincs átment eval vagy kifizetéses fiók.</div>';
+    $('actNote').textContent=R.length?'Átment evalok és azok a fiókok, amelyekből már lett kifizetés.':'';
+    $('closedSec').hidden=true; $('closed').innerHTML=''; $('paperSec').hidden=true; $('pcards').innerHTML='';
+  } else {
+    if(nav){ nav.textContent='Eredmények'; nav.setAttribute('href','?nez=eredmenyek'); }
+    if(tt) tt.textContent='Számlák';
+    const act=A.filter(a=>a.allapot==='aktív').sort((x,y)=>(x.fazis==='eval')-(y.fazis==='eval'));   // főoldal: csak aktív (a passzolt az Eredmények nézetben van)
+    $('cards').innerHTML=act.length?act.map(card).join(''):'<div class="empty">Nincs aktív számla.</div>';
+    $('actNote').textContent=act.length?'Kattints egy kártyára a naptárért és a részletekért.':'';
+    const cl=A.filter(a=>a.allapot!=='aktív'&&a.allapot!=='passzolt'&&a.allapot!=='bukott');   // bukott elrejtve; csak a lezárt/megszűnt marad
+    $('closedSec').hidden=!cl.length; $('closed').innerHTML=cl.map(card).join('');
+    const P=papers(); $('paperSec').hidden=!P.length; $('pcards').innerHTML=P.map(pcard).join('');
+  }
   document.querySelectorAll('.card').forEach(el=>el.onclick=()=>pick(el.dataset.id,true));
 }
 function pick(id,scroll){ S.sel=(S.sel===id&&scroll==='close')?null:id; S.month=null; S.day=null; try{history.replaceState(null,'',S.sel?'#'+encodeURIComponent(S.sel):location.pathname);}catch(e){} render(); if(S.sel&&scroll===true) $('detail').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}); }
@@ -497,14 +527,15 @@ function calHtml(a){
 function renderDetail(){
   const a=sel(), el=$('detail'); if(!a){el.hidden=true;el.innerHTML='';return;} el.hidden=false; el.className=phCls(a);
   const dv=Object.values(a.napok||{}), win=dv.filter(v=>v.pnl>0).length, best=dv.length?Math.max(...dv.map(v=>v.pnl)):null, worst=dv.length?Math.min(...dv.map(v=>v.pnl)):null, C=calHtml(a), k=a.kifizetheto;
-  const kp=[['Egyenleg',usd(a.egyenleg,1),''],['Eredmény',sgn(a.pnl,1),cls(a.pnl)],[a.fazis==='eval'?'Célig':'Kifizetve',a.fazis==='eval'?usd(a.cel_hatra):usd(a.kapott),''],['Párna a padlóig',usd(a.parna),''],['Nyerő napok',dv.length?`${win} / ${dv.length}`:'–',''],['Legjobb / legrosszabb nap',dv.length?`${sgn(best)} / ${sgn(worst)}`:'–','']];
+  const pap=a.fazis==='papir', lg=Object.entries(a.labak||{}).sort((x,y)=>y[1].pnl-x[1].pnl);
+  const kp=pap?[['Eredmény',sgn(a.pnl,1),cls(a.pnl)],['Ma',sgn(a.ma,1),cls(a.ma)],['Kötések',a.trade_db,''],['Nyerő napok',dv.length?`${win} / ${dv.length}`:'–',''],['Legjobb / legrosszabb nap',dv.length?`${sgn(best)} / ${sgn(worst)}`:'–',''],['Méret','×1','']]:[['Egyenleg',usd(a.egyenleg,1),''],['Eredmény',sgn(a.pnl,1),cls(a.pnl)],[a.fazis==='eval'?'Célig':'Kifizetve',a.fazis==='eval'?usd(a.cel_hatra):usd(a.kapott),''],['Párna a padlóig',usd(a.parna),''],['Nyerő napok',dv.length?`${win} / ${dv.length}`:'–',''],['Legjobb / legrosszabb nap',dv.length?`${sgn(best)} / ${sgn(worst)}`:'–','']];
   const T=(a.tradek||[]).filter(t=>!S.day||t.nap===S.day).slice().reverse().slice(0,200);
   const tf=new Intl.DateTimeFormat('hu-HU',{timeZone:'America/New_York',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const led=[[`Vásárlás${a.vasarolva?', '+a.vasarolva:''}`,a.ar_ismert?-a.ar:null],...(a.koltsegek||[]).map(c=>[`${esc(c.megj||'Költség')}${c.nap?', '+c.nap:''}`,-c.osszeg]),...(a.kifizetesek||[]).map((p,i)=>[`${i+1}. kifizetés, ${p.nap}${p.becsult?' (becsült)':''}${p.kapott!=null&&p.kapott!==p.osszeg?`, kivéve ${usd(p.osszeg)}`:''}`,p.kapott!=null?p.kapott:p.osszeg])];
   const net=a.kapott-a.koltes;
   el.innerHTML=`
   <div class="panel" style="display:flex;flex-direction:column;gap:18px">
-    <div class="dhead"><div style="display:flex;gap:14px;align-items:center">${emblem(a)}<div><h2>${esc(a.ceg)} ${esc(a.csomag)}</h2><div class="muted" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${chip(a)}<span>${esc(a.id)}</span>${a.vasarolva?'<span>vásárolva '+a.vasarolva+'</span>':''}</div></div></div><button class="btn" type="button" id="closeD">Bezárás</button></div>
+    <div class="dhead"><div style="display:flex;gap:14px;align-items:center">${emblem(a)}<div><h2>${pap?'Papír: '+esc(a.csomag):esc(a.ceg)+' '+esc(a.csomag)}</h2><div class="muted" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">${chip(a)}<span>${pap?esc(a.labak_nev||''):esc(a.id)}</span>${a.vasarolva?'<span>vásárolva '+a.vasarolva+'</span>':''}</div></div></div><button class="btn" type="button" id="closeD">Bezárás</button></div>
     <div class="kpis">${kp.map(([l,v,c])=>`<div><span>${l}</span><b class="${c}">${v}</b></div>`).join('')}</div>
   </div>
   <div class="grid" style="margin-top:20px">
@@ -512,23 +543,25 @@ function renderDetail(){
       <h3><span>${ic('cal')}Napi eredmény</span><span class="calnav"><button type="button" id="mPrev" aria-label="Előző hónap">‹</button><small style="min-width:120px;text-align:center">${C.label}</small><button type="button" id="mNext" aria-label="Következő hónap">›</button></span></h3>
       <div class="cal" id="cal">${C.html}</div>
       <p class="msum">${C.sum}</p>
-      <h3 style="margin-top:22px"><span>${ic('chart')}Egyenleg</span><small>a napi zárások alapján</small></h3>
+      <h3 style="margin-top:22px"><span>${ic('chart')}${pap?'Összesített eredmény':'Egyenleg'}</span><small>a napi zárások alapján</small></h3>
       ${equityChart(a)}
     </div>
     <div class="side">
-      ${k?`<div class="panel"><h3><span>${ic('payout')}Kifizetés</span><small>${k.hanyadik?k.hanyadik+'. kifizetés':''}</small></h3>
+      ${pap?`<div class="panel"><h3><span>${ic('book')}Lábak</span><small>a könyv stratégiái</small></h3>${lg.length?`<table class="ledger"><tbody>${lg.map(([n,v])=>`<tr><td>${esc(n)}, ${v.n} kötés, ${v.nyero} nyerő</td><td class="${cls(v.pnl)}">${sgn(v.pnl,1)}</td></tr>`).join('')}<tr class="tot"><td>Összesen</td><td class="${cls(a.pnl)}">${sgn(a.pnl,1)}</td></tr></tbody></table>`:'<div class="empty">Még nincs kötés.</div>'}</div>
+      <div class="panel"><h3><span>${ic('rules')}Mit mutat ez</span></h3><p class="msum" style="margin:0">A bot élő árfolyamon, de valódi megbízás nélkül kereskedi a könyvet. Kockázat: ${esc(a.meret||'$300 / kötés')}. Nincs cég-szabály, padló vagy cég napi limit; a bot saját napi veszteség-stopja ($900) él. Az eredmény a díjakat tartalmazza.${a.bot_el?'':' A bot most nem ad életjelet.'}</p></div>`:''}
+      ${pap?'':k?`<div class="panel"><h3><span>${ic('payout')}Kifizetés</span><small>${k.hanyadik?k.hanyadik+'. kifizetés':''}</small></h3>
         ${k.lehet?`<div class="payflag" style="margin-bottom:12px"><i></i>Most kérhető: ${usd(k.osszeg)}, ebből neked ${usd(k.kapnal)}</div>`:''}
         <ul class="check">${k.feltetelek.map(f=>`<li class="${f.ok?'ok':''}"><span class="m"><span>${f.ok?'✓':''}</span></span><span>${esc(f.szoveg)}</span></li>`).join('')}</ul></div>`
       :(a.fazis==='eval'&&a.allapot==='aktív'?`<div class="panel"><h3><span>${ic('payout')}Kifizetés</span></h3><div class="empty">Eval fázisban nincs kifizetés. A célig még ${usd(a.cel_hatra)} hiányzik.</div></div>`:'')}
-      <div class="panel"><h3><span>${ic('book')}Pénzügyek</span></h3><table class="ledger"><tbody>${led.map(([l,v])=>`<tr><td>${l}</td><td class="${v==null?'muted':cls(v)}">${v==null?'nincs megadva':sgn(v,1)}</td></tr>`).join('')}<tr class="tot"><td>Mérleg ezen a fiókon</td><td class="${cls(net)}">${sgn(net,1)}</td></tr></tbody></table></div>
+      ${pap?'':`<div class="panel"><h3><span>${ic('book')}Pénzügyek</span></h3><table class="ledger"><tbody>${led.map(([l,v])=>`<tr><td>${l}</td><td class="${v==null?'muted':cls(v)}">${v==null?'nincs megadva':sgn(v,1)}</td></tr>`).join('')}<tr class="tot"><td>Mérleg ezen a fiókon</td><td class="${cls(net)}">${sgn(net,1)}</td></tr></tbody></table></div>
       <div class="panel"><h3><span>${ic('rules')}Szabályok</span></h3><table class="ledger"><tbody>
         ${a.cel?`<tr><td>Profit-cél</td><td>${usd(a.cel)}</td></tr>`:''}${a.mll?`<tr><td>Max veszteség (padló ${usd(a.padlo)})</td><td>${usd(a.mll)}</td></tr>`:''}${a.napi_limit?`<tr><td>Napi limit</td><td>${usd(a.napi_limit)}</td></tr>`:''}${a.max_mini?`<tr><td>Max méret</td><td>${a.max_mini} mini / ${a.max_mini*10} mikro</td></tr>`:''}${a.szabaly&&a.szabaly.ejszaka===false?`<tr><td>Éjszakán át tartás</td><td>nem</td></tr>`:''}
-      </tbody></table></div>
+      </tbody></table></div>`}
     </div>
   </div>
   <div class="panel" style="margin-top:20px">
     <h3><span>${ic('trades')}Kötések${S.day?', '+dLabel(S.day):''}</span><small>${S.day?'<a href="#" id="clrDay">minden nap</a>':`${a.trade_db} kötés összesen, a legutóbbiak elöl`}</small></h3>
-    ${T.length?`<div class="tblwrap"><table class="tr"><thead><tr><th>Idő (New York)</th><th>Kontraktus</th><th>Oldal</th><th class="r">Db</th><th class="r">Ár</th><th class="r">Eredmény (díjjal)</th></tr></thead><tbody>${T.map(t=>`<tr><td>${t.t?tf.format(new Date(t.t.replace(/(\.\d{3})\d+/,'$1'))):esc(t.nap)}</td><td>${esc(t.k||'–')}</td><td>${t.o==='buy'?'vétel':t.o==='sell'?'eladás':'–'}</td><td class="r">${t.db==null?'–':t.db}</td><td class="r">${t.ar==null?'–':nf2.format(t.ar)}</td><td class="r ${cls(t.pnl)}">${sgn(t.pnl,1)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Még nincs kötés.</div>'}
+    ${T.length?`<div class="tblwrap"><table class="tr"><thead><tr><th>${pap?'Zárás (New York)':'Idő (New York)'}</th><th>${pap?'Piac és láb':'Kontraktus'}</th><th>${pap?'Irány':'Oldal'}</th><th class="r">Db</th><th class="r">${pap?'Belépő':'Ár'}</th><th class="r">Eredmény (díjjal)</th></tr></thead><tbody>${T.map(t=>`<tr><td>${t.t?tf.format(new Date(t.t.replace(/(\.\d{3})\d+/,'$1'))):esc(t.nap)}</td><td>${esc(t.k||'–')}</td><td>${pap?(t.o==='buy'?'long':'short'):t.o==='buy'?'vétel':t.o==='sell'?'eladás':'–'}</td><td class="r">${t.db==null?'–':t.db}</td><td class="r">${t.ar==null?'–':nf2.format(t.ar)}</td><td class="r ${cls(t.pnl)}">${sgn(t.pnl,1)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Még nincs kötés.</div>'}
   </div>`;
   $('closeD').onclick=()=>pick(a.id,'close');
   const step=n=>{const [y,m]=S.month.split('-').map(Number); const d=new Date(y,m-1+n,1); S.month=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); S.day=null; renderDetail();};
@@ -582,13 +615,13 @@ function render(){ if(!S.data) return; renderSum(); renderCtl(); renderCards(); 
   $('foot').textContent='Az egyenleg és a kötések a cégek rendszeréből jönnek, néhány percenként frissülve. A fiókok ára és a kifizetések a főkönyvből; a becsültként jelölt kifizetés összegét az egyenleg-változásból számolja az oldal.';
 }
 async function load(){
-  let D=null; S.stale=false;
+  let D=null; S.stale=false; S.view=new URLSearchParams(location.search).get('nez');
   if(!/[?&]local=1/.test(location.search)){ try{ const r=await fetch(DATA_URL+'?t='+Date.now(),{cache:'no-store'}); if(r.ok) D=await r.json(); }catch(e){} }
   if(!D){ try{ const r=await fetch('accounts.json',{cache:'no-cache'}); if(r.ok){ D=await r.json(); S.stale=true; } }catch(e){} }
   if(!D){ if(!S.data) $('err').innerHTML='<div class="err">Az adat most nem érhető el. Az oldal percenként újrapróbálja.</div>'; return; }
   if(!S.busy) await loadCtl();
   for(const a of (D&&D.szamlak)||[]) if(a.fazis==='eval'&&a.allapot==='aktív'&&/complet|pass/i.test(a.statusz||'')) a.allapot='passzolt';   // a Hyperprop „Completed” = átment eval
-  S.data=D; if(S.sel==null&&location.hash){ const h=decodeURIComponent(location.hash.slice(1)); if(accts().some(a=>a.id===h)) S.sel=h; }
+  S.data=D; if(S.sel==null&&location.hash){ const h=decodeURIComponent(location.hash.slice(1)); if(accts().concat((D&&D.papir)||[]).some(a=>a.id===h)) S.sel=h; }
   if(S.sel&&!sel()) S.sel=null; render();
 }
 // csillagmező: lassan sodródó pontok két mélységben (egyetlen háttér-mozgás; csökkentett mozgásnál áll)
